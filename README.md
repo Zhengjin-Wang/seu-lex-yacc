@@ -1,1 +1,1 @@
-## seu-lex-yacc: a programming lab of seu
+## seu-lex-yacc: a compiling programming lab of seu
