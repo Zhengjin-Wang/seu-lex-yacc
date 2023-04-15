@@ -1,11 +1,13 @@
 package core;
 
 import dto.ParseResult;
+import utils.StringUtils;
 
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 
 /**
@@ -63,6 +65,174 @@ public class LexParser {
     private static Map<String, String> getRawRegexAction(String rulePart){
         Map<String, String> rawRegexAction = new HashMap<>();
 
+        int status = 0; // 0表示不在regex-action解析，1表示在regex解析，3表示在action解析（单行），4表示在action解析（大括号)
+        /*  0阶段读入非空白符进入1阶段
+            1阶段在下边五个变量都是0才能进入下个阶段
+            此时遇到\n直接进入0阶段
+            遇到空白符进入2阶段
+            2阶段遇到第一个非空白符进入3或4阶段
+            遇到除{以外的符号进入3阶段，再遇到\n进入0阶段，清空stringbuilder
+            遇到{进入4阶段，再遇到}进入0阶段，清空stringbuilder
+
+         */
+
+        //引号里的括号还有转义中的括号要看作无效啊
+        int parenthesis = 0; // 遇左括号加1，遇右括号减一
+        int bracket = 0;
+        int curBracket = 0;
+        boolean quote = false; // 遇引号改变状态
+        boolean slash = false; // 正在转义
+        //上边四个变量只有1阶段有效
+        //只有三个括号计数都是0并且quote是false且转义是false，遇到空格或\t才改变状态
+        StringBuilder regex = new StringBuilder();
+        StringBuilder action = new StringBuilder();
+        for(int i = 0; i < rulePart.length(); ++i){
+            char c = rulePart.charAt(i);
+            if(slash){
+                if(status == 1) {
+                    regex.append(c);
+                }
+                else{
+                    action.append(c);
+                }
+                slash = false;
+                continue;
+            }
+            if(quote){
+                if(status == 1) {
+                    regex.append(c);
+                }
+                else{
+                    action.append(c);
+                }
+                if(c == '\\'){
+                    slash = true;
+                    continue;
+                }
+                if(c == '"'){
+                    quote = false;
+                }
+                continue;
+            }
+            switch (status){
+                case 0:
+                    if(!StringUtils.isBlankChar(c)){
+                        --i; // 回退，以便写入stringbuilder
+                        status = 1;
+                    }
+                    break;
+                case 1:
+                    //先slash再quote，转义的优先级最高
+
+                    if(parenthesis == 0 && bracket == 0 && curBracket == 0 && quote == false && slash == false){ //这时后边跟\n不跟action? 不考虑了，按空白符处理
+
+                        if(StringUtils.isBlankChar(c)){
+                            --i;
+                            status = 2;
+                            break;
+                        }
+
+                    }
+
+                    if(c == '('){
+                        ++parenthesis;
+                    }
+                    else if(c == ')'){
+                        --parenthesis;
+                        if(parenthesis < 0){
+                            throw new RuntimeException("Invalid parenthesis input");
+                        }
+                    }
+                    else if(c == '['){
+                        ++bracket;
+                    }
+                    else if(c == ']'){
+                        --bracket;
+                        if(bracket < 0){
+                            throw new RuntimeException("Invalid bracket input");
+                        }
+                    }
+                    else if(c == '{'){
+                        ++curBracket;
+                    }
+                    else if(c == '}'){
+                        --curBracket;
+                        if(curBracket < 0){
+                            throw new RuntimeException("Invalid curBracket input");
+                        }
+                    }
+                    else if(c == '"'){
+                        quote = true;
+                    }
+                    else if(c == '\\'){
+                        slash = true;
+                    }
+
+                    regex.append(c);
+
+                    break;
+
+                case 2:
+                    if(!StringUtils.isBlankChar(c)){
+                        --i; // 回退，以便写入stringbuilder
+                        if(c == '{'){
+                            status = 4;
+                        }
+                        else{
+                            status = 3;
+                        }
+
+                    }
+                    break;
+
+                case 3:
+                    if(c == '\n' || c == '\r'){
+                        rawRegexAction.put(regex.toString(), action.toString());
+                        regex = new StringBuilder();
+                        action = new StringBuilder();
+                        status = 0;
+                        break;
+                    }
+                    else if(c == '"'){
+                        quote = true;
+                    }
+                    else if(c == '\\'){
+                        slash = true;
+                    }
+
+                    action.append(c);
+
+                    break;
+
+                case 4:
+                    if(c == '}'){
+                        action.append(c);
+                        rawRegexAction.put(regex.toString(), action.toString());
+                        regex = new StringBuilder();
+                        action = new StringBuilder();
+                        status = 0;
+                        break;
+                    }
+                    else if(c == '"'){
+                        quote = true;
+                    }
+                    else if(c == '\\'){
+                        slash = true;
+                    }
+
+                    action.append(c);
+
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        if(action.length() != 0){
+            rawRegexAction.put(regex.toString(), action.toString());
+        }
+
         return rawRegexAction;
     }
 
@@ -74,6 +244,82 @@ public class LexParser {
      */
     private static Map<String, String> getRegexAction(Map<String, String> rawRegexAction, Map<String, String> aliasMap){
         Map<String, String> regexAction = new HashMap<>();
+
+//        aliasMap.forEach((k,v)->{
+//            System.out.println("k:" + k + "\t" + "v:" + v+ "\n");
+//        });
+
+        rawRegexAction.forEach((k,v)->{
+            int status = 0; // 1 是 {
+            StringBuilder alias = new StringBuilder();
+            StringBuilder newKey = new StringBuilder();
+            boolean quote = false;
+            boolean slash = false;
+            for(int i = 0; i < k.length(); ++i){
+                char c = k.charAt(i);
+                if(slash){
+                    newKey.append(c);
+                    slash = false;
+                    continue;
+                }
+                if(quote){
+                    newKey.append(c);
+                    if(c == '\\'){
+                        slash = true;
+                        continue;
+                    }
+                    if(c == '"'){
+                        quote = false;
+                    }
+                    continue;
+                }
+                switch (status){
+                    case 0:
+                        if(c == '{'){
+                            status = 1;
+                        }
+                        else{
+                            newKey.append(c);
+                            if(c == '\\'){
+                                slash = true;
+                            }
+                            if(c == '"'){
+                                quote = true;
+                            }
+                        }
+                        break;
+                    case 1:
+                        if (c == '}'){
+                            status = 0;
+                            if(aliasMap.containsKey(alias.toString())){
+                                newKey.append(aliasMap.get(alias.toString()));
+                            }
+                            else{ // 理论上来说，此时alias只能是数字,数字的形式，不然会报错
+                                if(!Pattern.matches("[0-9]+(,[0-9]+)?" , alias.toString())){
+                                    System.out.println(alias.toString());
+                                    throw new RuntimeException("Wrong regex expression, incorrect format of {}, can only be {digit, digit} or {alias}");
+                                }
+                                String origin = "{" + alias.toString() + "}";
+                                newKey.append(origin);
+                            }
+                            alias = new StringBuilder();
+                        }
+                        else{
+                            alias.append(c);
+                        }
+                        if(c != '}' && i == k.length() - 1){
+                            newKey.append("{");
+                            newKey.append(alias.toString());
+                        }
+
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+            regexAction.put(newKey.toString(), v);
+        });
 
         return regexAction;
     }
@@ -94,9 +340,9 @@ public class LexParser {
         Map<String, String> aliasMap = LexParser.detachDefinationPart(split[0], parseResult);
 
         Map<String, String> rawRegexAction = LexParser.getRawRegexAction(split[1]);
+        parseResult.setRawRegexAction(rawRegexAction);
 
         Map<String, String> regexAction = LexParser.getRegexAction(rawRegexAction, aliasMap);
-
         parseResult.setRegexAction(regexAction);
 
         return parseResult;
