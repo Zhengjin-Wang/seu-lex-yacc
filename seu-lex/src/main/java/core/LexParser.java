@@ -6,6 +6,7 @@ import utils.StringUtils;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -35,7 +36,7 @@ public class LexParser {
         String[] part1Split = split[0].split("%\\{");
         parseResult.setPreCopy(part1Split[1]);
 
-        Map<String, String> aliasMap = new HashMap<>();
+        Map<String, String> aliasMap = new LinkedHashMap<>();
         String[] regexAliases = regexAlias.split("\n");
         for(String s:regexAliases){
             s = s.strip();
@@ -63,7 +64,7 @@ public class LexParser {
      * @return
      */
     private static Map<String, String> getRawRegexAction(String rulePart){
-        Map<String, String> rawRegexAction = new HashMap<>();
+        Map<String, String> rawRegexAction = new LinkedHashMap<>();
 
         int status = 0; // 0表示不在regex-action解析，1表示在regex解析，3表示在action解析（单行），4表示在action解析（大括号)
         /*  0阶段读入非空白符进入1阶段
@@ -243,7 +244,7 @@ public class LexParser {
      * @return
      */
     private static Map<String, String> getRegexAction(Map<String, String> rawRegexAction, Map<String, String> aliasMap){
-        Map<String, String> regexAction = new HashMap<>();
+        Map<String, String> regexAction = new LinkedHashMap<>();
 
 //        aliasMap.forEach((k,v)->{
 //            System.out.println("k:" + k + "\t" + "v:" + v+ "\n");
