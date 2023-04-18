@@ -21,4 +21,6 @@ public class SplitStringTest {
         System.out.println(SpAlpha.isLexOperand(c));
     }
 
+
+
 }
