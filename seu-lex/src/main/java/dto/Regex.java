@@ -198,7 +198,7 @@ public class Regex {
         return stringBuilder.toString();
     }
 
-    private String toPostFix(String postFix){
+    private String toPostFix(String expandRegex){
         return "";
     }
 
@@ -206,7 +206,7 @@ public class Regex {
         this.rawRegex = rawRegex;
         this.escapeRegex = quoteReplace(rawRegex);
         this.expandRegex = expand(escapeRegex);
-        this.postFix = toPostFix(postFix);
+        this.postFix = toPostFix(expandRegex);
     }
 
 }
