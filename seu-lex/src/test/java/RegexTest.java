@@ -19,6 +19,20 @@ public class RegexTest {
         System.out.println(regex.getExpandRegex());
     }
 
+    @Test
+    public void addDotTest(){
+        String s = "(ab\\[)?c+c*c[1-3]\"[x x .  ]\"\\++";
+        Regex regex = new Regex(s);
+        System.out.println(regex.getDotAddedRegex());
+    }
+
+    @Test
+    public void toPostfixTest(){
+        String s = "a|b?(\\(cd)+w*([a-c])";
+        Regex regex = new Regex(s);
+        System.out.println(regex.getPostFix());
+    }
+
 
     @Test
     public void charTest(){

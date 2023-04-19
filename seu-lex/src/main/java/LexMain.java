@@ -1,4 +1,6 @@
 import core.LexParser;
+import core.NFABuilder;
+import dto.NFA;
 import dto.ParseResult;
 
 import java.io.File;
@@ -20,6 +22,7 @@ public class LexMain {
             }
             System.out.println("Running...");
             ParseResult parseResult = LexParser.getParseResult(file);
+            NFA nfa = NFABuilder.buildNFA(parseResult);
         }
     }
 }

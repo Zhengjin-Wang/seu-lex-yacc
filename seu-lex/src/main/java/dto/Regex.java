@@ -4,6 +4,8 @@ import constant.Range;
 import constant.SpAlpha;
 import lombok.Data;
 
+import java.util.Stack;
+
 /**
  *  正则表达式，以及它的变形，以便生成NFA
  *  只考虑ascii字符
@@ -14,6 +16,7 @@ public class Regex {
     private String rawRegex; // 原始正则表达式
     private String escapeRegex; // 将将原始表达式中的转义（两个字符，如\n）替换为一个字符'\n'，\看作一个字符
     private String expandRegex; // 将[]等符号替换展开，让正则表达式只剩下双目运算符 | serial，单目运算符? * \ 以及括号还有.（代表全部字符）
+    private String dotAddedRegex;
     private String postFix; // 后缀表达式
 
     //把引号换成()，其中有[ ( *等操作符自动加上\，其他保持不变，即保留所有的转义字符\，统一到转换NFA时起作用
@@ -55,6 +58,9 @@ public class Regex {
             else{
                 //遇到不转义的.，直接替换为ANY，方便NFA转换，而\.则保留原.字符，这样转移操作只需要保留原字符就行，只要考虑t n r
                 if(i > 0 && rawRegex.charAt(i-1) != '\\' && c == '.'){
+                    stringBuilder.append(SpAlpha.ANY);
+                }
+                else if(i == 0 && c == '.'){
                     stringBuilder.append(SpAlpha.ANY);
                 }
                 else {
@@ -198,15 +204,98 @@ public class Regex {
         return stringBuilder.toString();
     }
 
-    private String toPostFix(String expandRegex){
-        return "";
+    private String addDot(String expandRegex){
+        StringBuilder stringBuilder = new StringBuilder();
+        boolean slash = false;
+        for(int i = 0; i < expandRegex.length(); ++i){
+            char c = expandRegex.charAt(i);
+            if(slash){
+                stringBuilder.append(c);
+                slash = false;
+                if(i < expandRegex.length() - 1 &&
+                        !SpAlpha.notValidConcatBeforeSomeChar(expandRegex.charAt(i+1))){
+
+                    stringBuilder.append(SpAlpha.CONCAT);
+                }
+                continue;
+            }
+            if(c == '\\'){
+                stringBuilder.append(c);
+                slash = true;
+            }
+            else {
+                stringBuilder.append(c);
+                if (i < expandRegex.length() - 1 &&
+                        !SpAlpha.notValidConcatBeforeSomeChar(expandRegex.charAt(i + 1)) &&
+                        !SpAlpha.notValidConcatAfterSomeChar(expandRegex.charAt(i))) {
+
+                    stringBuilder.append(SpAlpha.CONCAT);
+                }
+            }
+        }
+        return stringBuilder.toString();
+
+    }
+
+    /**
+     *
+     * @param dotAddedRegex 只有 \ ? * + | () SpAlpha.CONCAT 操作符 SpAlpha.ANY看作非操作符的一种（无需额外处理）
+     * @return 最后的操作符只有 ? * + SpAlpha.CONCAT | \
+     */
+    private String toPostFix(String dotAddedRegex){
+        // \转移符号直接保留在要转义字符前边就行了，等到转换成NFA时遇到\直接slash=true，然后读入下一个字符slash=false，在转后缀表达式时也用同样的做法
+        StringBuilder stringBuilder = new StringBuilder();
+        Stack<Character> opStack = new Stack<Character>();
+
+        boolean slash = false;
+
+        for(int i = 0; i < dotAddedRegex.length(); ++i){
+            char c = dotAddedRegex.charAt(i);
+            if(slash){
+                stringBuilder.append(c);
+                slash = false;
+                continue;
+            }
+            if(c == '\\'){
+                stringBuilder.append(c);
+                slash = true;
+            }
+            else {
+                if(!SpAlpha.isInfixOp(c)){ // 普通字符
+                    stringBuilder.append(c);
+                }
+                else{ // 操作符
+                    if(c == '('){
+                        opStack.push(c);
+                    }
+                    else if(c == ')'){
+                        while(opStack.peek() != '('){
+                            stringBuilder.append(opStack.pop());
+                        }
+                        opStack.pop();
+                    }
+                    else {
+                        while(!opStack.empty() && !SpAlpha.infixOpPriorityCompare(opStack.peek(), c)){
+                            stringBuilder.append(opStack.pop());
+                        }
+                        opStack.push(c);
+                    }
+                }
+            }
+        }
+        while(!opStack.empty()){
+            stringBuilder.append(opStack.pop());
+        }
+
+        return stringBuilder.toString();
     }
 
     public Regex(String rawRegex){
-        this.rawRegex = rawRegex;
+        this.rawRegex = rawRegex.trim();
         this.escapeRegex = quoteReplace(rawRegex);
         this.expandRegex = expand(escapeRegex);
-        this.postFix = toPostFix(expandRegex);
+        this.dotAddedRegex = addDot(expandRegex);
+        this.postFix = toPostFix(dotAddedRegex);
     }
 
 }
