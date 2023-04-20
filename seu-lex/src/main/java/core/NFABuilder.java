@@ -285,9 +285,27 @@ public class NFABuilder {
      * @param nfas
      * @return
      */
-    private static NFA parallelAll(List<NFA> nfas){
+    public static NFA parallelAll(List<NFA> nfas){
 
-        return new NFA();
+        NFA nfa = new NFA();
+        int newStart = getNewState();
+        nfa.setStartState(newStart);
+
+        Set<Integer> oldStartState = new HashSet<>();
+
+        //先合并alphabet, states 和 transGraph（这时是数个不连通的图）endStates和actionMap
+        for (NFA oldNFA : nfas) {
+            nfa.getAlphabet().addAll(oldNFA.getAlphabet());
+            nfa.getStates().addAll(oldNFA.getStates());
+            nfa.getTransGraph().putAll(oldNFA.getTransGraph());
+            nfa.getEndStates().addAll(oldNFA.getEndStates());
+            nfa.getActionMap().putAll(oldNFA.getActionMap());
+            oldStartState.add(oldNFA.getStartState());
+        }
+
+        nfa.addEdge(newStart, oldStartState, SpAlpha.EPSILON);
+
+        return nfa;
     }
 
     public static NFA buildNFA(ParseResult parseResult){

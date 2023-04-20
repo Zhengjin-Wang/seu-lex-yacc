@@ -1,11 +1,16 @@
+import core.LexParser;
 import core.NFABuilder;
 import dto.LexAction;
 import dto.NFA;
+import dto.ParseResult;
 import dto.Regex;
 import org.junit.Test;
 import utils.VisualizeUtils;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 public class NFABuilderTest {
 
@@ -64,6 +69,40 @@ public class NFABuilderTest {
         Regex regex = new Regex(s);
         LexAction lexAction = new LexAction(1, "printf();");
         NFA nfa = NFABuilder.buildSingleNFA(regex, lexAction);
+        VisualizeUtils.visualizeNFA(nfa, workDir);
+        for (Integer i : nfa.getActionMap().keySet()) {
+            System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));
+        }
+    }
+
+    @Test
+    public void parallelAllTest(){
+
+        int ord = 0;
+        List<NFA> nfas = new ArrayList<>();
+
+        String[] strs = new String[]{"ab|c", "de", "c+", "a?"};
+
+        for (String str : strs) {
+            Regex regex = new Regex(str);
+            LexAction lexAction = new LexAction(ord++, "printf(" + ord + ");");
+            NFA nfa = NFABuilder.buildSingleNFA(regex, lexAction);
+            nfas.add(nfa);
+        }
+
+        NFA nfa = NFABuilder.parallelAll(nfas);
+
+        VisualizeUtils.visualizeNFA(nfa, workDir);
+        for (Integer i : nfa.getActionMap().keySet()) {
+            System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));
+        }
+    }
+
+    @Test
+    public void buildNFATest(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
+        ParseResult parseResult = LexParser.getParseResult(file);
+        NFA nfa = NFABuilder.buildNFA(parseResult);
         VisualizeUtils.visualizeNFA(nfa, workDir);
         for (Integer i : nfa.getActionMap().keySet()) {
             System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));

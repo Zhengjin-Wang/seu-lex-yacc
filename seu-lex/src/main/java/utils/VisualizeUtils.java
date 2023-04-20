@@ -44,9 +44,9 @@ public class VisualizeUtils {
                 List<Integer> ends = outEdges.get(c);
                 String displayStr = c.toString();
                 if (c == ' ') displayStr = "[ws]";
-                else if (c == '\t') displayStr = "\\t";
-                else if (c == '\n') displayStr = "\\n";
-                else if (c == '\r') displayStr = "\\r";
+                else if (c == '\t') displayStr = "[\\\\t]";
+                else if (c == '\n') displayStr = "[\\\\n]";
+                else if (c == '\r') displayStr = "[\\\\r]";
                 else if (c == SpAlpha.ANY) displayStr = "ANY";
                 for(Integer end:ends){
                     String edge = String.format("%d -> %d[label=\" %s\"]\n", begin, end, displayStr);
@@ -106,7 +106,7 @@ public class VisualizeUtils {
             String dotFileName = "\"" + dotFile.getAbsolutePath() + "\"";
             String pngFileName = "\"" + pngFile.getAbsolutePath() + "\"";
 
-            String cmd = String.format("dot -Tpng %s -Gdpi=200 -o %s", dotFileName, pngFileName);
+            String cmd = String.format("dot -Tpng %s -Gdpi=150 -o %s", dotFileName, pngFileName);
             Process process = Runtime.getRuntime().exec(cmd);
 
         } catch (IOException e) {
