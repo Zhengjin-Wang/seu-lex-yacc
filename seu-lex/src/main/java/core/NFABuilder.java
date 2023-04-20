@@ -1,6 +1,7 @@
 package core;
 
 import constant.SpAlpha;
+import dto.LexAction;
 import dto.NFA;
 import dto.ParseResult;
 import dto.Regex;
@@ -20,7 +21,9 @@ public class NFABuilder {
     }
 
     private static NFA createAtomNFA(char c){
-        return new NFA(c);
+        int startState = getNewState();
+        int endState = getNewState();
+        return new NFA(c, startState, endState);
     }
 
     /**
@@ -93,10 +96,10 @@ public class NFABuilder {
     /**
      *
      * @param regex 用到的是postFix
-     * @param action 就是C代码，到达接受态时执行C代码就行，可能要把C代码复制到特定的地方
+     * @param lexAction 就是C代码，到达接受态时执行C代码就行，可能要把C代码复制到特定的地方
      * @return
      */
-    private static NFA buildSingleNFA(Regex regex, String action){
+    private static NFA buildSingleNFA(Regex regex, LexAction lexAction){
 
         String postFix = regex.getPostFix();
         Stack<NFA> nfaStack = new Stack<>();
@@ -109,6 +112,15 @@ public class NFABuilder {
         for(int i = 0; i < postFix.length(); ++i){
             char c = postFix.charAt(i);
             if(slash){
+                if(c == 'n'){
+                    c = '\n';
+                }
+                else if(c == 'r'){
+                    c = '\r';
+                }
+                else if(c == 't'){
+                    c = '\t';
+                }
                 NFA nfa = createAtomNFA(c);
                 nfaStack.push(nfa);
                 slash = false;
@@ -176,13 +188,20 @@ public class NFABuilder {
 
         Map<String, String> regexAction = parseResult.getRegexAction();
         List<NFA> nfas = new ArrayList<>();
+        int orderCnt = 0;
 
-        regexAction.forEach((rawRegex, action)->{
+        for(Map.Entry<String, String> entry: regexAction.entrySet()){
+            String rawRegex = entry.getKey();
+            String action = entry.getValue();
+
             Regex regex = new Regex(rawRegex);
-            NFA nfa = buildSingleNFA(regex, action);
+            LexAction lexAction = new LexAction(orderCnt, action);
+            NFA nfa = buildSingleNFA(regex, lexAction);
 
             nfas.add(nfa);
-        });
+            ++orderCnt;
+        }
+
 
         NFA finalNFA = parallelAll(nfas);
 

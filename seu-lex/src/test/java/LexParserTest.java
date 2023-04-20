@@ -1,5 +1,8 @@
 import core.LexParser;
+import dto.LexAction;
+import dto.NFA;
 import dto.ParseResult;
+import dto.Regex;
 import org.junit.Test;
 
 import java.io.File;
@@ -26,6 +29,19 @@ public class LexParserTest {
         File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
         ParseResult parseResult = LexParser.getParseResult(file);
         System.out.println(parseResult);
+    }
+
+    @Test
+    public void actionOrderTest(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.l");
+        ParseResult parseResult = LexParser.getParseResult(file);
+        Map<String, String> regexAction = parseResult.getRegexAction();
+        for(Map.Entry<String, String> entry: regexAction.entrySet()){
+            String rawRegex = entry.getKey();
+            String action = entry.getValue();
+
+            System.out.println(rawRegex + " :: " + action);
+        }
     }
 
     @Test
