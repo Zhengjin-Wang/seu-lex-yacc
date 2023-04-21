@@ -11,7 +11,7 @@ import java.util.*;
  * 根据LexParser获取到的ParseResult生成的NFA
  */
 @Data
-public class NFA implements Serializable { // 正则表达式转NFA时，遇到转义字符\，当作一个操作符，可以操作[ \（lex操作符），也可以操作n r t（用作转义），如果是其他普通字符，则保持原字符
+public class NFA implements Serializable, FA { // 正则表达式转NFA时，遇到转义字符\，当作一个操作符，可以操作[ \（lex操作符），也可以操作n r t（用作转义），如果是其他普通字符，则保持原字符
                     // 只有遇到n r t才替换为对应转义后字符，其他就保留原字符
                     // 当某条边上的字符是SpAlpha.ANY，表明任何读入的字符都能被接收，转移到下一状态
 
@@ -29,6 +29,74 @@ public class NFA implements Serializable { // 正则表达式转NFA时，遇到�
 
     public void addState(int newState){
         states.add(newState);
+    }
+
+    // 可能有可以优化的空间
+    // 获得某状态集的epsilon闭包扩展，包括原状态集
+    public Set<Integer> getEpsilonClosure(Set<Integer> set){
+
+        Set<Integer> closure = new HashSet<>();
+        closure.addAll(set);
+
+        Set<Integer> preSet = new HashSet<>();
+        Set<Integer> diffSet = new HashSet<>();
+        diffSet.addAll(closure);
+
+        do {
+
+            for (Integer state : diffSet) {
+                Map<Character, List<Integer>> outEdges = transGraph.get(state); // 可能有不存在出边的状态（某个终态）
+                if(outEdges == null) continue;
+                if (outEdges.containsKey(SpAlpha.EPSILON)) {
+                    List<Integer> epsilonExpandStates = outEdges.get(SpAlpha.EPSILON);
+                    closure.addAll(epsilonExpandStates);
+                }
+            }
+//            System.out.println(preSet);
+//            System.out.println(closure);
+            if(preSet.equals(closure)){
+                break;
+            }
+            else{
+                diffSet = new HashSet<>();
+                diffSet.addAll(closure);
+                diffSet.removeAll(preSet);
+                preSet.addAll(closure);
+            }
+
+        }while (true);
+
+        return closure;
+    }
+
+    // 获得某状态集经过字符c转移的直接转移后状态集合，还没有进行epsilon扩展
+    private Set<Integer> moveOneStep(Set<Integer> set, char c){
+        Set<Integer> nextStates = new HashSet<>(); // 转移后的状态，和原set可能有重叠，但并不是完全包含的关系
+
+        for (Integer state : set) {
+            Map<Character, List<Integer>> outEdges = transGraph.get(state); // 可能有不存在出边的状态（某个终态）
+            if(outEdges == null) continue;
+            if (outEdges.containsKey(c)) {
+                List<Integer> expandStates = outEdges.get(c);
+                nextStates.addAll(expandStates);
+            }
+            if(outEdges.containsKey(SpAlpha.ANY) && c != '\n'){ // ANY可以匹配除了\n外的所有字符
+                List<Integer> expandStates = outEdges.get(SpAlpha.ANY);
+                nextStates.addAll(expandStates);
+            }
+        }
+
+        return nextStates;
+    }
+
+    // 获得某状态集经过字符c转移的直接转移后状态集合，并已经进行完全扩展
+    // 如果c是SpAlpha.ANY的话，生成的DFA中ANY这条边代表不在字母表中的字符到达时，会走这条边，也就是其他字符会走这条边
+    public Set<Integer> move(Set<Integer> set, char c){
+
+        Set<Integer> nextStates = moveOneStep(set, c);
+
+        return getEpsilonClosure(nextStates);
+
     }
 
     /**
@@ -92,9 +160,6 @@ public class NFA implements Serializable { // 正则表达式转NFA时，遇到�
         addEdge(this.startState, this.endStates, c);
 
     }
-
-
-
 
 }
 

@@ -16,6 +16,6 @@ public class VisualizeUtilsTest {
     public void visualizerTest(){
         String workDir = "D:\\SEU DOCUMENTS\\编译原理实践\\graphviz";
         NFA nfa = new NFA('b',2,6);
-        VisualizeUtils.visualizeNFA(nfa, workDir);
+        VisualizeUtils.visualizeFA(nfa, workDir);
     }
 }

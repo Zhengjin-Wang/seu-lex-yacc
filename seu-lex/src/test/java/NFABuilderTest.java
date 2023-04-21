@@ -11,6 +11,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class NFABuilderTest {
 
@@ -19,7 +20,7 @@ public class NFABuilderTest {
     @Test
     public void createAtomNFATest() {
         NFA a = NFABuilder.createAtomNFA('a');
-        VisualizeUtils.visualizeNFA(a, workDir);
+        VisualizeUtils.visualizeFA(a, workDir);
     }
 
     @Test
@@ -28,8 +29,8 @@ public class NFABuilderTest {
         a.addEdge(0, a.getEndStates(), 'b');
         NFA b = NFABuilder.copyNFA(a);
         b.addEdge(b.getStartState(),b.getEndStates(),'e');
-        VisualizeUtils.visualizeNFA(a, workDir, "a");
-        VisualizeUtils.visualizeNFA(b, workDir, "b");
+        VisualizeUtils.visualizeFA(a, workDir, "a");
+        VisualizeUtils.visualizeFA(b, workDir, "b");
 
     }
 
@@ -37,7 +38,7 @@ public class NFABuilderTest {
     public void kleeneTest() {
         NFA a = NFABuilder.createAtomNFA('a');
         a = NFABuilder.kleene(a);
-        VisualizeUtils.visualizeNFA(a, workDir);
+        VisualizeUtils.visualizeFA(a, workDir);
     }
 
     @Test
@@ -48,7 +49,7 @@ public class NFABuilderTest {
         NFA c = NFABuilder.serial(a, b);
         NFA d = NFABuilder.copyNFA(c);
         NFA e = NFABuilder.serial(c,d);
-        VisualizeUtils.visualizeNFA(e, workDir);
+        VisualizeUtils.visualizeFA(e, workDir);
     }
 
     @Test
@@ -57,10 +58,10 @@ public class NFABuilderTest {
         a = NFABuilder.kleene(a);
         NFA b = NFABuilder.createAtomNFA('b');
         NFA c = NFABuilder.parallel(a, b);
-        // VisualizeUtils.visualizeNFA(c, workDir);
+        // VisualizeUtils.visualizeFA(c, workDir);
         NFA d = NFABuilder.copyNFA(c);
         NFA e = NFABuilder.parallel(c,d);
-        VisualizeUtils.visualizeNFA(e, workDir);
+        VisualizeUtils.visualizeFA(e, workDir);
     }
 
     @Test
@@ -69,7 +70,7 @@ public class NFABuilderTest {
         Regex regex = new Regex(s);
         LexAction lexAction = new LexAction(1, "printf();");
         NFA nfa = NFABuilder.buildSingleNFA(regex, lexAction);
-        VisualizeUtils.visualizeNFA(nfa, workDir);
+        VisualizeUtils.visualizeFA(nfa, workDir);
         for (Integer i : nfa.getActionMap().keySet()) {
             System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));
         }
@@ -92,7 +93,7 @@ public class NFABuilderTest {
 
         NFA nfa = NFABuilder.parallelAll(nfas);
 
-        VisualizeUtils.visualizeNFA(nfa, workDir);
+        VisualizeUtils.visualizeFA(nfa, workDir);
         for (Integer i : nfa.getActionMap().keySet()) {
             System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));
         }
@@ -103,11 +104,27 @@ public class NFABuilderTest {
         File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
         ParseResult parseResult = LexParser.getParseResult(file);
         NFA nfa = NFABuilder.buildNFA(parseResult);
-        VisualizeUtils.visualizeNFA(nfa, workDir);
+        VisualizeUtils.visualizeFA(nfa, workDir);
         for (Integer i : nfa.getActionMap().keySet()) {
             System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));
         }
     }
 
+    @Test
+    public void algorithmNFATest(){
+        String s = "c(.+|e)b";
+        Regex regex = new Regex(s);
+        LexAction lexAction = new LexAction(1, "printf();");
+        NFA nfa = NFABuilder.buildSingleNFA(regex, lexAction);
+        VisualizeUtils.visualizeFA(nfa, workDir);
+
+        Set<Integer> startStates = new HashSet<>();
+        startStates.add(nfa.getStartState());
+        Set<Integer> epsilonClosure = nfa.getEpsilonClosure(startStates);
+        Set<Integer> next = nfa.move(epsilonClosure, 'c');
+        //System.out.println(next);
+        Set<Integer> middle = nfa.move(next, 'e');
+        System.out.println(nfa.move(middle, 'z'));
+    }
 
 }
