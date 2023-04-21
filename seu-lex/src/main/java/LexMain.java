@@ -1,5 +1,7 @@
+import core.DFABuilder;
 import core.LexParser;
 import core.NFABuilder;
+import dto.DFA;
 import dto.NFA;
 import dto.ParseResult;
 
@@ -23,6 +25,7 @@ public class LexMain {
             System.out.println("Running...");
             ParseResult parseResult = LexParser.getParseResult(file);
             NFA nfa = NFABuilder.buildNFA(parseResult);
+            DFA bigDfa = DFABuilder.buildDFA(nfa);
         }
     }
 }

@@ -11,6 +11,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class NFATest {
+
+    public static final String workDir = "D:\\SEU DOCUMENTS\\编译原理实践\\graphviz";
+
     @Test
     public void addEdgeTest(){
         String workDir = "D:\\SEU DOCUMENTS\\编译原理实践\\graphviz";
@@ -34,6 +37,7 @@ public class NFATest {
         File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
         ParseResult parseResult = LexParser.getParseResult(file);
         NFA nfa = NFABuilder.buildNFA(parseResult);
+        VisualizeUtils.visualizeFA(nfa, workDir, "epsilon-closure-test");
 
         Set<Integer> startStates = new HashSet<>();
         startStates.add(nfa.getStartState());
@@ -67,6 +71,7 @@ public class NFATest {
         System.out.println(epsilonClosure);
         Set<Integer> nextStates = nfa.move(epsilonClosure, 'i');
         System.out.println(nextStates);
+
     }
 
 

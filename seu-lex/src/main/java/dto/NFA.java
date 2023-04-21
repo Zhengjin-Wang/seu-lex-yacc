@@ -15,6 +15,7 @@ public class NFA implements Serializable, FA { // 正则表达式转NFA时，遇
                     // 只有遇到n r t才替换为对应转义后字符，其他就保留原字符
                     // 当某条边上的字符是SpAlpha.ANY，表明任何读入的字符都能被接收，转移到下一状态
 
+    public static Long timeDiff = 0L;
 
     private int startState = -1; // 初态
     private Set<Integer> endStates = new HashSet<>(); // 终态（接受态），会有多个
@@ -31,40 +32,58 @@ public class NFA implements Serializable, FA { // 正则表达式转NFA时，遇
         states.add(newState);
     }
 
+    //返回某个状态所有epsilon可达状态，包括它自己
+//    private Set<Integer> getEpsilonExpand(Integer initState){
+//
+//        Set<Integer> rsl = new HashSet<>();
+//        rsl.add(initState);
+//        Queue<Integer> queue = new ArrayDeque<>();
+//        queue.add(initState);
+//
+//        while (!queue.isEmpty()){
+//            Integer state = queue.poll();
+//            Map<Character, List<Integer>> outEdges = transGraph.get(state);
+//            if (outEdges == null) continue; // 判断是否有出边
+//            if (outEdges.containsKey(SpAlpha.EPSILON)) {
+//                List<Integer> epsilonExpandStates = outEdges.get(SpAlpha.EPSILON);
+//                for (Integer nextState : epsilonExpandStates) {
+//                    if(!rsl.contains(nextState)){
+//                        queue.add(nextState);
+//                        rsl.add(nextState);
+//                    }
+//                }
+//            }
+//        }
+//
+//        return rsl;
+//    }
+
     // 可能有可以优化的空间
     // 获得某状态集的epsilon闭包扩展，包括原状态集
     public Set<Integer> getEpsilonClosure(Set<Integer> set){
 
         Set<Integer> closure = new HashSet<>();
         closure.addAll(set);
+//        for (Integer state : set) {
+//            closure.addAll(getEpsilonExpand(state));
+//        }
+        Queue<Integer> queue = new ArrayDeque<>();
+        queue.addAll(closure);
 
-        Set<Integer> preSet = new HashSet<>();
-        Set<Integer> diffSet = new HashSet<>();
-        diffSet.addAll(closure);
-
-        do {
-
-            for (Integer state : diffSet) {
-                Map<Character, List<Integer>> outEdges = transGraph.get(state); // 可能有不存在出边的状态（某个终态）
-                if(outEdges == null) continue;
-                if (outEdges.containsKey(SpAlpha.EPSILON)) {
-                    List<Integer> epsilonExpandStates = outEdges.get(SpAlpha.EPSILON);
-                    closure.addAll(epsilonExpandStates);
+        while (!queue.isEmpty()){
+            Integer state = queue.poll();
+            Map<Character, List<Integer>> outEdges = transGraph.get(state);
+            if (outEdges == null) continue; // 判断是否有出边
+            if (outEdges.containsKey(SpAlpha.EPSILON)) {
+                List<Integer> epsilonExpandStates = outEdges.get(SpAlpha.EPSILON);
+                for (Integer nextState : epsilonExpandStates) {
+                    if(!closure.contains(nextState)){
+                        queue.add(nextState);
+                        closure.add(nextState);
+                    }
                 }
             }
-//            System.out.println(preSet);
-//            System.out.println(closure);
-            if(preSet.equals(closure)){
-                break;
-            }
-            else{
-                diffSet = new HashSet<>();
-                diffSet.addAll(closure);
-                diffSet.removeAll(preSet);
-                preSet.addAll(closure);
-            }
-
-        }while (true);
+        }
 
         return closure;
     }
@@ -95,7 +114,13 @@ public class NFA implements Serializable, FA { // 正则表达式转NFA时，遇
 
         Set<Integer> nextStates = moveOneStep(set, c);
 
-        return getEpsilonClosure(nextStates);
+        long startTime = System.currentTimeMillis();
+        Set<Integer> epsilonClosure = getEpsilonClosure(nextStates);
+        long endTime = System.currentTimeMillis();
+
+        NFA.timeDiff += endTime - startTime;
+
+        return epsilonClosure;
 
     }
 

@@ -15,7 +15,7 @@ public class DFABuilderTest {
 
     @Test
     public void buildDFATest(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\c99.l");
         ParseResult parseResult = LexParser.getParseResult(file);
         NFA nfa = NFABuilder.buildNFA(parseResult);
         VisualizeUtils.visualizeFA(nfa, workDir, "nfa");

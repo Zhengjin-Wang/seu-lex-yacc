@@ -43,6 +43,8 @@ public class DFABuilder {
         //将I0加入队列
         Queue<Set<Integer>> queue = new ArrayDeque<>();
         queue.add(nfaStartStates);
+
+        long diff = 0;
         
         while(!queue.isEmpty()){
             Set<Integer> curNfaStates = queue.poll();
@@ -52,7 +54,10 @@ public class DFABuilder {
                 if(c == SpAlpha.EPSILON){ // 排除空串边
                     continue;
                 }
+                long startTime = System.currentTimeMillis();
                 Set<Integer> nextNfaStates = nfa.move(curNfaStates, c);
+                long endTime = System.currentTimeMillis();
+                diff += endTime - startTime;
                 if(nextNfaStates.size() == 0){ // 无法转移，跳过
                     continue;
                 }
@@ -64,14 +69,15 @@ public class DFABuilder {
                     queue.add(nextNfaStates);
                 }
                 
-                // 添加边
+                // 添加dfa中的边
                 int nextDfaState = nfaToDfaStateMap.get(nextNfaStates);
                 Set<Integer> nextDfaStates = new HashSet<>();
                 nextDfaStates.add(nextDfaState);
                 dfa.addEdge(curDfaState, nextDfaStates, c);
             }
         }
-        
+        System.out.println("计算move总时间：" + diff + " 毫秒");
+        System.out.println("计算epsilon-closure时间：" + NFA.timeDiff + " 毫秒");
         // 最后要根据 nfaToDfaStateMap 中key是否和nfa的endState有交集判断dfa的endState, 并判断该添加哪个动作
         Set<Integer> endStates = new HashSet<>();
         Map<Integer, LexAction> actionMap = new HashMap<>();
@@ -83,13 +89,13 @@ public class DFABuilder {
             intersect.addAll(set);
             intersect.retainAll(nfa.getEndStates());
 
-            // 是终态
+            // 当前states和原nfa终态有交集，说明是终态
             if(intersect.size() > 0){
                 endStates.add(dfaState);
                 LexAction finalAction = new LexAction(nfa.getEndStates().size() + 1, "");
                 for (Integer nfaEndState : intersect) {
                     LexAction lexAction = nfa.getActionMap().get(nfaEndState);
-                    if(lexAction.getOrder() < finalAction.getOrder()){
+                    if(lexAction.getOrder() < finalAction.getOrder()){ // 选择order最小，即.l文件最靠前的动作
                         finalAction = lexAction;
                     }
                 }
