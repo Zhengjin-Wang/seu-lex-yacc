@@ -68,6 +68,18 @@ public class DFA implements Serializable, FA {
 
     }
 
+    // 返回下一个状态，如果不能移动到下一个状态，返回-1（代表死状态）
+    public int move(int begin, char c){
+        if(!transGraph.containsKey(begin)){
+            return -1;
+        }
+        Map<Character, List<Integer>> outEdges = transGraph.get(begin);
+        if(!outEdges.containsKey(c)){
+            return -1;
+        }
+        return outEdges.get(c).get(0);
+    }
+
     public DFA(){
 
     }

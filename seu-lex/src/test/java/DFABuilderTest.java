@@ -15,7 +15,7 @@ public class DFABuilderTest {
 
     @Test
     public void buildDFATest(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\c99.l");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
         ParseResult parseResult = LexParser.getParseResult(file);
         NFA nfa = NFABuilder.buildNFA(parseResult);
         VisualizeUtils.visualizeFA(nfa, workDir, "nfa");
@@ -32,4 +32,32 @@ public class DFABuilderTest {
         }
 
     }
+
+    @Test
+    public void minimizeDFATest(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.l");
+        ParseResult parseResult = LexParser.getParseResult(file);
+        NFA nfa = NFABuilder.buildNFA(parseResult);
+        VisualizeUtils.visualizeFA(nfa, workDir, "nfa");
+        System.out.println("----------------------nfa----------------------");
+        for (Integer i : nfa.getActionMap().keySet()) {
+            System.out.println(i + "状态，action: " + nfa.getActionMap().get(i));
+        }
+
+        DFA dfa = DFABuilder.buildDFA(nfa);
+        VisualizeUtils.visualizeFA(dfa, workDir, "dfa");
+        System.out.println("----------------------dfa----------------------");
+        for (Integer i : dfa.getActionMap().keySet()) {
+            System.out.println(i + "状态，action: " + dfa.getActionMap().get(i));
+        }
+
+        DFA minDFA = DFABuilder.minimizeDFA(dfa);
+        VisualizeUtils.visualizeFA(minDFA, workDir, "min_dfa");
+        System.out.println("----------------------min dfa----------------------");
+        for (Integer i : minDFA.getActionMap().keySet()) {
+            System.out.println(i + "状态，action: " + minDFA.getActionMap().get(i));
+        }
+
+    }
+
 }
