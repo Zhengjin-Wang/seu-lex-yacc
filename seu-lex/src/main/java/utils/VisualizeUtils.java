@@ -122,4 +122,6 @@ public class VisualizeUtils {
         visualizeFA(fa, workDirPath, "FA_graph");
     }
 
+    public static void visualizeFA(FA fa) {visualizeFA(fa, "./");}
+
 }
