@@ -18,14 +18,14 @@ public class LexParser {
 
     /**
      * 返回regex alias的map，并将预定义部分拷贝到parseResult
-     * @param definationPart
+     * @param definitionPart
      * @param parseResult
      * @return
      * @throws RuntimeException
      */
-    private static Map<String, String> detachDefinationPart(String definationPart, ParseResult parseResult) throws RuntimeException{
+    private static Map<String, String> detachDefinitionPart(String definitionPart, ParseResult parseResult) throws RuntimeException{
         //默认 %{ %} 在文件开始位置，也就是在定义规则之前，而且一定存在
-        String[] split = definationPart.split("%}");
+        String[] split = definitionPart.split("%}");
         if (split.length != 2){
             throw new RuntimeException("Invalid .l file format");
         }
@@ -338,7 +338,7 @@ public class LexParser {
         parseResult.setUserCopy(split[2]); // 如果定义部分或者规则部分或者用户部分出现%%怎么办呢? 比如字符串里包含%% （待解决）
 
         //解析第一部分，分离 %{ %} 包围的用户定义部分和正则表达式别名alias部分
-        Map<String, String> aliasMap = LexParser.detachDefinationPart(split[0], parseResult);
+        Map<String, String> aliasMap = LexParser.detachDefinitionPart(split[0], parseResult);
 
         Map<String, String> rawRegexAction = LexParser.getRawRegexAction(split[1]);
         parseResult.setRawRegexAction(rawRegexAction);

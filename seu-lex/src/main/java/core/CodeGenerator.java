@@ -127,7 +127,8 @@ public class CodeGenerator {
         return stringBuilder.toString();
     }
 
-    // 这个yylex只能匹配一次正则表达式，成功则执行动作，返回0，失败则返回-1
+    // 命令行交互，回车后stdin可能已经刷新，因此不能再识别第一次匹配到内容以后的内容，因为是直接匹配stdin流中的内容
+    // 这个yylex只能匹配一次正则表达式，成功则执行动作，返回0（也可以返回自定义宏，用在yacc），失败则返回-1
     public static String generateYYlex(DFA dfa){
         return "int yylex() {\n" +
                 "      int rollbackLines = 0;\n" +

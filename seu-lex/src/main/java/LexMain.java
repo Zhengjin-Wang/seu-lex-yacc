@@ -30,6 +30,7 @@ public class LexMain {
             DFA bigDfa = DFABuilder.buildDFA(nfa);
             DFA dfa = DFABuilder.minimizeDFA(bigDfa);
             String code = CodeGenerator.generateCode(parseResult, dfa);
+            // 命令行交互，回车后stdin可能已经刷新，因此不能再识别第一次匹配到内容以后的内容，因为是直接匹配stdin流中的内容
             /**
              * 考虑在.y文件里调用yylex()，while(_cur_char != EOF) {
              *      int rsl = yylex();
@@ -38,6 +39,8 @@ public class LexMain {
              *         // 返回值是不同词法单元对应的宏，语义动作在.l文件中已经定义好（比如标识符会添加一个name-val映射）
              *         // 词法单元是ID宏+标识符名
              *         // 数字的词法单元则是NUM宏+数值
+             *
+             *         // 这里应该有添加词法单元到序列的代码
              *      }
              * }
              *
