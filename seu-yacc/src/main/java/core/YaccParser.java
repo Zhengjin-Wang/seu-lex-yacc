@@ -2,10 +2,13 @@ package core;
 
 import constant.Associativity;
 import dto.ParseResult;
+import utils.StringUtils;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class YaccParser {
@@ -50,7 +53,7 @@ public class YaccParser {
                     String token = lineSplit[j].trim();
                     if(token.length() != 0){
                         if(token.charAt(0) == '/') break; // 开始注释
-                        parseResult.getTokens().add(token);
+                        parseResult.getTerminals().add(token);
                     }
                 }
             }
@@ -150,6 +153,37 @@ public class YaccParser {
 //        System.out.println(parseResult.getUserCopy());
     }
 
+    public static void setProductionPriority(ParseResult parseResult){
+        for (String leftPart : parseResult.getProductions().keySet()) {
+
+            List<List<String>> rightPartSet = parseResult.getProductions().get(leftPart);
+            for (List<String> rightPart : rightPartSet) {
+                List<String> production = new ArrayList();
+                production.add(leftPart);
+                Integer priority = 0;
+
+                for (int i = 0; i < rightPart.size(); i++) {
+                    String symbol = rightPart.get(i);
+                    if(symbol.equals("%prec")){
+                        String prioritySymbol = rightPart.get(i+1);
+                        priority = parseResult.getSymbolPriority().get(prioritySymbol);
+                        if(priority == null) throw new RuntimeException("Priority symbol not found");
+                        break;
+                    }
+                    if (parseResult.getSymbolPriority().containsKey(symbol)){
+                        priority = parseResult.getSymbolPriority().get(symbol); // 直接将最后一个出现的具有优先级的终结符当作产生式的运算符，不知道对不对
+                    }
+                    production.add(symbol);
+                }
+
+                // 加入list和优先级列表中
+                parseResult.getProductionList().add(production);
+                parseResult.getProductionPriority().put(production, priority);
+
+            }
+        }
+    }
+
     /**
      * 解析规则部分的文法定义，将结果设置到parseResult中
      * @param grammar
@@ -160,6 +194,149 @@ public class YaccParser {
         // 所有非终结符和终结符都是字母构成的字符串，且用空格分割
         // 当出现|后为空，说明这是一个epsilon产生式
         // 所有非终结符必须出现在产生式左部，否则异常
+
+        boolean isProduction = false;
+        boolean isRightPart = false;
+        boolean isAction = false;
+        StringBuilder stringBuilder = new StringBuilder();
+        String leftPart = new String();
+
+        String symbol = new String();
+        List<List<String>> productions = new ArrayList<>();
+        List<String> production = new ArrayList<>();
+
+        List<List<String>> extendedProductions = new ArrayList<>();
+        List<String> extendedProduction = new ArrayList<>();
+
+        for (int i = 0; i < grammar.length(); ++i) {
+
+            char c = grammar.charAt(i);
+
+            if(c == '/'){ // 一律视作注释
+                while(grammar.charAt(i) != '\n') ++i;
+                continue;
+            }
+
+            if(!isProduction && StringUtils.isEmptyChar(c)){ // 不是产生式部分，遇到空字符跳过
+                continue;
+            }
+
+            isProduction = true;
+
+            if(!isRightPart) {
+                if (!StringUtils.isEmptyChar(c) && c != ':'){ // 处于左部，不是空字符也不是:，是左部内容
+                    stringBuilder.append(c);
+                }
+                else {
+                    if (leftPart.length() == 0){ // 只给leftPart赋一次值
+                        leftPart = stringBuilder.toString();
+                        stringBuilder = new StringBuilder();
+                    }
+                    if(c == ':'){
+                        isRightPart = true;
+                        // 找到第一个非空白符
+                        ++i;
+                        while(StringUtils.isEmptyChar(grammar.charAt(i))) ++i;
+                        --i;
+                        continue;
+                    }
+                }
+            }
+            else{ // 正在右部
+
+                if(!isAction){ // 不是{}中的内容
+                    if(!StringUtils.isEmptyChar(c) && c != '|' && c != '{' && c != ';'){ // 是一个symbol
+                        if(symbol.length() != 0){ // 刷新一下symbol
+                            symbol = new String();
+                        }
+                        stringBuilder.append(c);
+//                        System.out.println((int) c);
+//                        System.out.println(stringBuilder.toString());
+                    }
+                    else{
+                        if (symbol.length() == 0){
+                            symbol = stringBuilder.toString(); // 如果c是一个;且之前没有symbol，那这就是一个空字符，代表epsilon
+//                            System.out.println(symbol);
+                            production.add(symbol);
+                            extendedProduction.add(symbol);
+                            stringBuilder = new StringBuilder();
+                        }
+
+                        if(c == '{'){ // 进入action状态
+                            stringBuilder = new StringBuilder();
+                            stringBuilder.append(c);
+                            isAction = true;
+                        }
+                        else if(c == '|') { // 结束了一个产生式
+
+                            // 检查production中是否出现了%prec，若出现应该重定义优先级
+
+                            productions.add(production);
+                            extendedProductions.add(extendedProduction);
+                            symbol = new String();
+                            stringBuilder = new StringBuilder();
+                            production = new ArrayList<>();
+                            extendedProduction = new ArrayList<>();
+                            ++i;
+                            while(StringUtils.isEmptyChar(grammar.charAt(i))) ++i;
+                            --i;
+                        }
+                        else if(c == ';'){ // 整个产生式集合的分析结束了
+                            if (production.get(0).length() == 0){ // 此时这是一个空产生式
+                                production = new ArrayList<>();
+                                extendedProduction = new ArrayList<>();
+                            }
+                            productions.add(production); // 得加入最后一个产生式
+                            extendedProductions.add(extendedProduction);
+
+                            parseResult.getNonTerminals().add(leftPart);
+                            parseResult.getProductions().put(leftPart, productions);
+                            parseResult.getExtendedProductions().put(leftPart, extendedProductions);
+
+                            leftPart = new String();
+                            symbol = new String();
+                            stringBuilder = new StringBuilder();
+                            production = new ArrayList<>();
+                            extendedProduction = new ArrayList<>();
+                            productions = new ArrayList<>();
+                            extendedProductions = new ArrayList<>();
+
+                            isProduction = false;
+                            isRightPart = false;
+                        }
+
+                    }
+                }
+                else{ // {}中的内容
+                    stringBuilder.append(c);
+                    if(c == '}'){ // 这就要求{}里边的内容不能含有}，如printf("}")，一般也不应该出现
+                        extendedProduction.add(stringBuilder.toString()); // 这里加的是具体动作代码，实际可以转换为哑元M->ε，规约时执行动作
+                        stringBuilder = new StringBuilder();
+                        isAction = false;
+                    }
+                }
+
+            }
+
+
+        }
+
+//        System.out.println(parseResult.getNonTerminals());
+////        System.out.println(parseResult.getProductions());
+////        System.out.println(parseResult.getExtendedProductions());
+//        for (String key : parseResult.getProductions().keySet()) {
+//            System.out.println("左部: " + key);
+//            for (List<String> strings : parseResult.getProductions().get(key)) {
+//                System.out.println(strings);
+//            }
+//        }
+
+        setProductionPriority(parseResult);
+
+//        parseResult.getProductionPriority().forEach((k,v)->{
+//            System.out.println(k + ", 优先级:" + v);
+//        });
+
     }
 
 
