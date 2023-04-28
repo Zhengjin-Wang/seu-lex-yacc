@@ -21,6 +21,7 @@ public class YaccParser {
     public static void detachAndParseDefinitionPart(String definitionPart, ParseResult parseResult){
 
         String[] split = definitionPart.split("%}");
+
         if (split.length != 2){
             throw new RuntimeException("Invalid .y file format");
         }
@@ -157,7 +158,7 @@ public class YaccParser {
         for (String leftPart : parseResult.getProductions().keySet()) {
 
             List<List<String>> rightPartSet = parseResult.getProductions().get(leftPart);
-            for (List<String> rightPart : rightPartSet) {
+            for (List<String> rightPart : rightPartSet) { // 遍历不同的右部
                 List<String> production = new ArrayList();
                 production.add(leftPart);
                 Integer priority = 0;
@@ -182,6 +183,40 @@ public class YaccParser {
 
             }
         }
+
+        for (String leftPart : parseResult.getExtendedProductions().keySet()) {
+
+            List<List<String>> rightPartSet = parseResult.getExtendedProductions().get(leftPart);
+            for (List<String> rightPart : rightPartSet) { // 遍历不同的右部
+                List<String> production = new ArrayList();
+                production.add(leftPart);
+                Integer priority = 0;
+
+                for (int i = 0; i < rightPart.size(); i++) {
+                    String symbol = rightPart.get(i);
+                    if(symbol.equals("%prec")){
+                        String prioritySymbol = rightPart.get(i+1);
+                        priority = parseResult.getSymbolPriority().get(prioritySymbol);
+                        if(priority == null) throw new RuntimeException("Priority symbol not found");
+                        break;
+                    }
+                    if (parseResult.getSymbolPriority().containsKey(symbol)){
+                        priority = parseResult.getSymbolPriority().get(symbol); // 直接将最后一个出现的具有优先级的终结符当作产生式的运算符，不知道对不对
+                    }
+                    production.add(symbol);
+                }
+
+                // 加入list和优先级列表中
+                parseResult.getExtendedProductionList().add(production);
+                parseResult.getExtendedProductionPriority().put(production, priority);
+
+            }
+        }
+        for (List<String> strings : parseResult.getExtendedProductionList()) {
+            System.out.println(strings);
+        }
+
+
     }
 
     /**
@@ -212,7 +247,7 @@ public class YaccParser {
 
             char c = grammar.charAt(i);
 
-            if(c == '/'){ // 一律视作注释
+            if(c == '/' && !isAction){ // 一律视作注释
                 while(grammar.charAt(i) != '\n') ++i;
                 continue;
             }
