@@ -1,4 +1,6 @@
+import core.LR1Builder;
 import core.YaccParser;
+import dto.LR1;
 import dto.ParseResult;
 
 import java.io.File;
@@ -18,6 +20,7 @@ public class YaccMain {
             }
             System.out.println("Running...");
             ParseResult parseResult = YaccParser.getParseResult(file);
+            LR1Builder.buildLR1(parseResult);
         }
 
     }

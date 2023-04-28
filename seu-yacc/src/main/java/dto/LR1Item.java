@@ -13,7 +13,7 @@ import java.util.Set;
 public class LR1Item {
 
     private int productionNumber; // 对应产生式编号
-    private int dotPos = 0; // 点的位置，在右部第几个元素之前，从0开始
+    private int dotPos = 1; // 点的位置，在右部第几个元素之前，从1开始，因为产生式是包含左部的
     private int predictSymbol; // 预测符（一定是终结符）的编号，不同预测符同一kernel在不同的item里，方便比较
 
     @Override

@@ -59,7 +59,7 @@ public class LexMain {
             }
 
             // 可视化
-            VisualizeUtils.visualizeFA(dfa);
+            VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
 
         }
     }

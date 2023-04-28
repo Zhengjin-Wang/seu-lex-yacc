@@ -83,8 +83,14 @@ public class YaccParser {
                         break;
                     }
 
-                    ++i;
-                    line = lines[i].trim();
+                    do {
+                        ++i;
+                        line = lines[i].trim();
+                        if(line.length() > 0) break;
+                    }while (true);
+
+                    // System.out.println(line);
+
                     if(line.trim().charAt(0) == '}') break;
 
                 }while (true);
@@ -212,9 +218,9 @@ public class YaccParser {
 
             }
         }
-        for (List<String> strings : parseResult.getExtendedProductionList()) {
-            System.out.println(strings);
-        }
+//        for (List<String> strings : parseResult.getExtendedProductionList()) {
+//            System.out.println(strings);
+//        }
 
 
     }
@@ -247,7 +253,7 @@ public class YaccParser {
 
             char c = grammar.charAt(i);
 
-            if(c == '/' && !isAction){ // 一律视作注释
+            if(c == '/' && !isAction && i > 0 && grammar.charAt(i-1) != '\''){ // 不在''中的/一律视作注释
                 while(grammar.charAt(i) != '\n') ++i;
                 continue;
             }
@@ -280,7 +286,17 @@ public class YaccParser {
             else{ // 正在右部
 
                 if(!isAction){ // 不是{}中的内容
-                    if(!StringUtils.isEmptyChar(c) && c != '|' && c != '{' && c != ';'){ // 是一个symbol
+                    if(c == '\''){ // 单引号说明是一个ascii字符，放入production即可，对其他操作屏蔽
+                        if(symbol.length() != 0){ // 刷新一下symbol
+                            symbol = new String();
+                        }
+                        stringBuilder.append(c);
+                        ++i;
+                        stringBuilder.append(grammar.charAt(i));
+                        ++i;
+                        stringBuilder.append(grammar.charAt(i));
+                    }
+                    else if(!StringUtils.isEmptyChar(c) && c != '|' && c != '{' && c != ';'){ // 是一个symbol
                         if(symbol.length() != 0){ // 刷新一下symbol
                             symbol = new String();
                         }
@@ -289,7 +305,7 @@ public class YaccParser {
 //                        System.out.println(stringBuilder.toString());
                     }
                     else{
-                        if (symbol.length() == 0){
+                        if (symbol.length() == 0){ // 第一次遇到空白符，会将StringBuilder内容刷入symbol，放进production，一直维持直到遇到下一个非空白符，代表要读入token
                             symbol = stringBuilder.toString(); // 如果c是一个;且之前没有symbol，那这就是一个空字符，代表epsilon
 //                            System.out.println(symbol);
                             production.add(symbol);
