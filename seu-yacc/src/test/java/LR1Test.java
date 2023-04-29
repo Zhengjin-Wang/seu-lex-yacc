@@ -44,6 +44,7 @@ public class LR1Test {
     }
 
     @Test
+    // 在VisualizeUtilsTest中测试过了
     public void innerExpandTest(){
 
     }

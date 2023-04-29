@@ -110,7 +110,6 @@ public class VisualizeUtils {
         }
 
 
-
         String rsl = "digraph G{\n"
                 + " rankdir=LR\n" // 从左到右排列
                 + "node [shape=box]\n" // 设置节点为框格式

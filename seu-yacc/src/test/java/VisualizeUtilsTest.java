@@ -47,4 +47,17 @@ public class VisualizeUtilsTest {
 
     }
 
+    @Test
+    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数
+    public void visualizeLR1Test(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.y");
+        ParseResult parseResult = YaccParser.getParseResult(file);
+        LR1 lr1 = new LR1();
+        LR1Builder.assignID(lr1, parseResult);
+        LR1Builder.encodeProduction(lr1, parseResult);
+        LR1Builder.calculateFirstSet(lr1);
+        LR1Builder.generateLR1Dfa(lr1);
+        VisualizeUtils.visualizeLR1(lr1, workDir);
+    }
+
 }

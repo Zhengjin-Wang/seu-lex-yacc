@@ -227,20 +227,19 @@ public class LR1Builder {
         lr1.setStartState(startState);
 
         // 开始不断扩展状态
-//        Queue<LR1State> queue = new ArrayDeque<>();
-//        queue.add(startState);
-//        while(!queue.isEmpty()){
-//            LR1State curState = queue.poll();
-//            List<LR1State> nextStates = lr1.outerExpand(curState); // 获得的是之前没出现过的状态
-//            for (LR1State nextState : nextStates) { // 如果为空，本轮就不会添加任何状态
-//                int stateId = getLr1StateId();
-//                nextState.setStateId(stateId);
-//                lr1.getStateToStateId().put(nextState, stateId);
-//
-//                queue.add(nextState);
-//            }
-//        }
+        Queue<LR1State> queue = new ArrayDeque<>();
+        queue.add(startState);
+        while(!queue.isEmpty()){
+            LR1State curState = queue.poll();
+            List<LR1State> nextStates = lr1.outerExpand(curState); // 获得的是之前没出现过的状态
+            for (LR1State nextState : nextStates) { // 如果为空，本轮就不会添加任何状态
+                int stateId = getLr1StateId();
+                nextState.setStateId(stateId);
+                lr1.getStateToStateId().put(nextState, stateId);
 
+                queue.add(nextState);
+            }
+        }
 
     }
 
