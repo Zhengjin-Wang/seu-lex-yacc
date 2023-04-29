@@ -1,28 +1,124 @@
 package utils;
 
 import dto.LR1;
+import dto.LR1Item;
+import dto.LR1ItemCore;
+import dto.LR1State;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class VisualizeUtils {
 
     // 生成graphviz有向图说明文件的字符串
-    private static String generateGraphvizString(LR1 lr1){
+    public static String generateGraphvizString(LR1 lr1){
+
         StringBuilder mainPart = new StringBuilder();
 
-        // 设置字体
-        mainPart.append("edge [fontname=\"SimHei\"]\n");
+        LR1State startState = lr1.getStartState();
+        Queue<LR1State> queue = new ArrayDeque<>();
+        Set<Integer> searchedLR1StateId = new HashSet<>();
+
+        queue.add(startState);
+        searchedLR1StateId.add(startState.getStateId());
+
+        while(!queue.isEmpty()){
+            LR1State curState = queue.poll();
+            Integer stateId = curState.getStateId();
+
+            // 先设置边的信息
+            StringBuilder nodeLabel = new StringBuilder();
+
+            nodeLabel.append("S" + stateId +"\\n\\n"); // 写上状态号
+
+            // 将同一core的预测符合并
+            Map<LR1ItemCore, List<Integer>> mergedItems = new LinkedHashMap<>();
+            for (LR1Item item : curState.getItems()) {
+                LR1ItemCore lr1ItemCore = item.getLr1ItemCore();
+                if(!mergedItems.containsKey(lr1ItemCore)){
+                    mergedItems.put(lr1ItemCore, new ArrayList<>());
+                }
+                mergedItems.get(lr1ItemCore).add(item.getPredictSymbol());
+            }
+
+            // 考虑提取出itemCore，然后把预测符作为一个集合
+
+            for (LR1ItemCore item: mergedItems.keySet()) { // 写入每一项，一项占一行
+
+                List<Integer> production = item.getProductionFromLR1(lr1);
+                Integer left = production.get(0);
+
+                String leftSymbolName = lr1.getNumberToSymbol().get(left);
+                nodeLabel.append(leftSymbolName);
+                nodeLabel.append(" -> ");
+
+                for (int i = 1; i < production.size(); i++) {
+                    if(item.getDotPos() == i){ // 这个地方前边要加·
+                        nodeLabel.append("·");
+                    }
+                    Integer symbolId = production.get(i);
+                    String symbolName = lr1.getNumberToSymbol().get(symbolId);
+                    nodeLabel.append(symbolName);
+                    nodeLabel.append(" ");
+                }
+
+                if(item.isReducible(lr1)){ // 能规约的话，在最后加一个点
+                    nodeLabel.append("· ");
+                }
+
+                // 去掉最后一个空格
+                nodeLabel.deleteCharAt(nodeLabel.length() - 1);
+
+                nodeLabel.append(", ");
+
+                for (Integer predictSymbol : mergedItems.get(item)) {
+                    String predictSymbolName = lr1.getNumberToSymbol().get(predictSymbol);
+                    nodeLabel.append(predictSymbolName + "|");
+                }
+
+                nodeLabel.deleteCharAt(nodeLabel.length() - 1); // 去掉最后一个|
+
+                nodeLabel.append("\\n");
+
+            }
+            
+            // 删除最后一个\n
+            nodeLabel.deleteCharAt(nodeLabel.length() - 1);
+            nodeLabel.deleteCharAt(nodeLabel.length() - 1);
+            
+            String nodeInfo = stateId + " " + "[label = \"" + nodeLabel.toString() + "\"]\n";
+            mainPart.append(nodeInfo);
+
+            // 设置边的信息
+            Integer curStateId = curState.getStateId();
+            for (Integer symbolId : curState.getEdges().keySet()) {
+                String symbolName = lr1.getNumberToSymbol().get(symbolId);
+                LR1State nextState = curState.getEdges().get(symbolId);
+                Integer nextStateId = nextState.getStateId();
+
+                // 加入一个边信息
+                mainPart.append(curStateId + " -> " + nextStateId + " [label = \"" + symbolName + "\"]\n");
+
+                if(!searchedLR1StateId.contains(nextStateId)){
+                    searchedLR1StateId.add(nextStateId);
+                    queue.add(nextState);
+                }
+            }
+
+        }
 
 
 
         String rsl = "digraph G{\n"
-                + " rankdir=LR\n"
+                + " rankdir=LR\n" // 从左到右排列
+                + "node [shape=box]\n" // 设置节点为框格式
+                + "node [fontname=\"SimHei\"]\n" // 中文支持，主要为了显示·
+                + "edge [fontname=\"SimHei\"]\n" // 中文支持
                 + mainPart.toString()
                 + "}";
+
         return rsl;
     }
 

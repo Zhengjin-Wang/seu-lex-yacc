@@ -72,6 +72,7 @@ public class LR1 {
 
         while(!queue.isEmpty()){
             LR1Item item = queue.poll();
+            // System.out.println(item.getProductionId() + "|" + item.getDotPos() + "|" + item.getPredictSymbol());
             if(item.isReducible(this)){ // 可规约，没得内扩展
                 continue;
             }
@@ -82,7 +83,10 @@ public class LR1 {
             // 是非终结符，有内扩展的可能
             // 先计算扩展symbol后边序列的first集，作为预测符
             List<Integer> production = item.getProductionFromLR1(this);
-            List<Integer> sequence = production.subList(item.getDotPos() + 1, production.size()); // 获取扩展符之后的序列
+
+//            List<Integer> sequence = production.subList(item.getDotPos() + 1, production.size()); // 不能直接赋值，传递了对象的引用
+            List<Integer> sequence = new ArrayList<>();
+            sequence.addAll(production.subList(item.getDotPos() + 1, production.size()));// 获取扩展符之后的序列
             sequence.add(item.getPredictSymbol()); // 要把预测符加到序列中
             Set<Integer> firstSet = calculateFirstSet(sequence);
 
