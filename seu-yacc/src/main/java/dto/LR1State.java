@@ -12,8 +12,8 @@ import java.util.*;
 @Data
 public class LR1State {
 
-    private Integer number;
-    private Map<Integer, Integer> edges = new HashMap<>(); // --终结符编号-> 状态号
+    private Integer stateId;
+    private Map<Integer, LR1State> edges = new HashMap<>(); // --symbol编号 -> 对应下一个状态
     private List<LR1Item> items = new ArrayList<>(); // 所有的item
 
     public void sortItems(){
@@ -21,16 +21,17 @@ public class LR1State {
             @Override
             public int compare(LR1Item o1, LR1Item o2) {
                 if (o1.equals(o2)) return 0;
-                boolean b =  o1.getProductionNumber() == o2.getProductionNumber() ?
+                boolean b =  o1.getProductionId() == o2.getProductionId() ?
                         ( o1.getDotPos() == o2.getDotPos() ?
                                 o1.getPredictSymbol() < o2.getPredictSymbol()
                                 :o1.getDotPos() < o2.getDotPos() ):
-                        o1.getProductionNumber() < o2.getProductionNumber();
+                        o1.getProductionId() < o2.getProductionId();
                 return b?-1:1;
             }
         });
     }
 
+    // 不知道可不可以优化
     public boolean equalItems(LR1State lr1State) {
 
         if(items.size() != lr1State.items.size()){
@@ -43,6 +44,11 @@ public class LR1State {
 
     }
 
+    @Override
+    public boolean equals(Object obj){
+        LR1State lr1State = (LR1State) obj;
+        return this.equalItems(lr1State);
+    }
 
 
 }

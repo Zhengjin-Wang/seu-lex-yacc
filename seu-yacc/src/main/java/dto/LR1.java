@@ -13,6 +13,9 @@ public class LR1 {
     private Integer dollarId; // dollar的终结符编号
     private Integer startNonTerminalId; // 文法开始符编号
 
+    private LR1State startState; // LR1Dfa的开始状态
+    private Map<LR1State, Integer> stateToStateId = new HashMap<>(); // 状态到状态号的映射，用于判断重复的状态
+
     // symbol(包括终结符和非终结符）的标号和字符串形式的双向映射，0~127是ASCII字符，大于等于128是自定义终结符，小于等于-1是自定义非终结符
     private Map<Integer, String> numberToSymbol = new HashMap<>(); // 方便可视化
     private Map<String, Integer> symbolToNumber = new HashMap<>();
@@ -37,6 +40,105 @@ public class LR1 {
 
     // 非终结符是否有空串，如果不在map里，说明还未被计算出来
     private Map<Integer, Boolean> nonTerminalHasEpsilon = new HashMap<>();
+
+    /**
+     * 对dotPos == production.size()的item，就不需要移动了，已到达可规约状态
+     *
+     * 对已经进行内部扩展的LR1状态进行外部扩展，根据kernel向右移动点，生成多个初始次状态，
+     * 先对所有初始次状态做内扩展，然后用对应symbol编号连上这个状态，
+     * 然后判断是否和之前的状态重复，只保留之前没生成过的状态，返回到LR1Builder中，设置状态号，然后把新状态加到队列里继续外扩展
+     * @param lr1State
+     * @return 生成的新状态集合（没有之前已经出现过的状态），返回后要在LR1Builder中给它们设置编号，然后把新状态加到队列里继续外扩展
+     */
+    public List<LR1State> outerExpand(LR1State lr1State){
+        // 先对所有初始次状态做内扩展，无论是否重复，用对应symbol编号连上这个状态，判断是否重复，不重复就加到返回集合中，后续设置编号并加入队列
+        List<LR1State> newStates = new ArrayList<>();
+
+        return newStates;
+    }
+
+
+    /**
+     * 对一个初始的LR1状态进行内部扩展，扩展在原LR1状态上
+     * @param lr1State
+     * @return
+     */
+    public LR1State innerExpand(LR1State lr1State){
+
+        Set<LR1Item> searchedItems = new HashSet<>();
+        searchedItems.addAll(lr1State.getItems());
+        Queue<LR1Item> queue = new ArrayDeque();
+        queue.addAll(lr1State.getItems());
+
+        while(!queue.isEmpty()){
+            LR1Item item = queue.poll();
+            if(item.isReducible(this)){ // 可规约，没得内扩展
+                continue;
+            }
+            Integer symbol = item.getCurrentSymbolFromLR1(this);
+            if(symbol >= 0){ // 是终结符，也不用内扩展
+                continue;
+            }
+            // 是非终结符，有内扩展的可能
+            // 先计算扩展symbol后边序列的first集，作为预测符
+            List<Integer> production = item.getProductionFromLR1(this);
+            List<Integer> sequence = production.subList(item.getDotPos() + 1, production.size()); // 获取扩展符之后的序列
+            sequence.add(item.getPredictSymbol()); // 要把预测符加到序列中
+            Set<Integer> firstSet = calculateFirstSet(sequence);
+
+            for (Integer productionId : nonTerminalToProductionIds.get(symbol)) {
+                for (Integer predictSymbol : firstSet) {
+                    LR1Item tempItem = new LR1Item(); // 新item点符默认在1处
+                    tempItem.setProductionId(productionId);
+                    tempItem.setPredictSymbol(predictSymbol);
+
+                    if(!searchedItems.contains(tempItem)){ // 是没被搜索到的item，标记为已搜索，加入到state中，并添加到队列
+                        searchedItems.add(tempItem);
+                        lr1State.getItems().add(tempItem);
+                        queue.add(tempItem);
+                    }
+                }
+            }
+
+        }
+
+        return lr1State;
+    }
+
+
+    /**
+     * 根据symbol序列得到first集，用于产生LR1的item时计算预测符
+     * @param sequence
+     * @return
+     */
+    public Set<Integer> calculateFirstSet(List<Integer> sequence){
+        Set<Integer> firstSet = new HashSet<>();
+        if (sequence.size() == 0){
+            firstSet.add(epsilonId);
+            return firstSet;
+        }
+
+        int firstId = sequence.get(0);
+
+        if(firstId >= 0){ // 是终结符
+            firstSet.add(firstId);
+        }
+        else { // 非终结符
+            Set<Integer> subFirstSet = nonTerminalFirstSet.get(firstId);
+
+            firstSet.addAll(subFirstSet);
+
+            if(subFirstSet.contains(epsilonId)){
+                firstSet.remove(epsilonId);
+                Set<Integer> subSet = calculateFirstSet(sequence.subList(1, sequence.size()));
+                firstSet.addAll(subSet);
+            }
+
+        }
+
+        return firstSet;
+    }
+
 
     // 左递归问题 https://www.zhihu.com/question/407704983
     // 按照产生式，而不是非终结符来遍历
@@ -88,15 +190,15 @@ public class LR1 {
 
     }
 
-
     /**
+     * 计算非终结符的first集
      * 根据一串序列（一定是右部）计算first，作为拓展后的预测符
      * 左递归问题 https://www.zhihu.com/question/407704983
      * @param sequence
      * @param preNonTerminals
      * @return
      */
-    public Set<Integer> initialCalculateFirst(List<Integer> sequence, Set<Integer> preNonTerminals){
+    public Set<Integer> initialCalculateFirstSet(List<Integer> sequence, Set<Integer> preNonTerminals){
 
         Set<Integer> firstSet = new HashSet<>();
         if (sequence.size() == 0){
@@ -112,7 +214,7 @@ public class LR1 {
         else { // 非终结符
             if(preNonTerminals.contains(firstId)){ // 产生左递归
                 if(nonTerminalHasEpsilon.get(firstId) == true){ // 能产生空串往下找就行
-                    Set<Integer> subSet = initialCalculateFirst(sequence.subList(1, sequence.size()), preNonTerminals);
+                    Set<Integer> subSet = initialCalculateFirstSet(sequence.subList(1, sequence.size()), preNonTerminals);
                     firstSet.addAll(subSet);
                 }
                 else { // 不能产生空串，终止在这了
@@ -132,7 +234,7 @@ public class LR1 {
                         List<Integer> right = production.subList(1, production.size());
 
                         preNonTerminals.add(left);
-                        Set<Integer> tmpFirstSet = initialCalculateFirst(right, preNonTerminals);
+                        Set<Integer> tmpFirstSet = initialCalculateFirstSet(right, preNonTerminals);
                         preNonTerminals.remove(left);
 
                         subFirstSet.addAll(tmpFirstSet); // 这个firstId非终结符的first集就是subFirstSet
@@ -151,7 +253,7 @@ public class LR1 {
 
                 if(subFirstSet.contains(epsilonId)){
                     firstSet.remove(epsilonId);
-                    Set<Integer> subSet = initialCalculateFirst(sequence.subList(1, sequence.size()), preNonTerminals);
+                    Set<Integer> subSet = initialCalculateFirstSet(sequence.subList(1, sequence.size()), preNonTerminals);
                     firstSet.addAll(subSet);
                 }
 

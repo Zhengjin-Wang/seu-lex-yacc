@@ -2,12 +2,11 @@ package core;
 
 import constant.SpSymbol;
 import dto.LR1;
+import dto.LR1Item;
+import dto.LR1State;
 import dto.ParseResult;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LR1Builder {
 
@@ -18,6 +17,9 @@ public class LR1Builder {
 
     private static Integer productionId = 1; // 从1开始计，在动作表里-production_id表示规约该产生式，正数则表示移进对应编号终结符
     private static Integer getProductionId() {return  productionId++;}
+
+    private static Integer lr1StateId = 0;
+    private static Integer getLr1StateId() {return  lr1StateId++;}
 
     // 为ParseResult已存在的终结符，非终结符分配id
     public static void assignID(LR1 lr1, ParseResult parseResult){
@@ -184,18 +186,64 @@ public class LR1Builder {
                 List<Integer> right = production.subList(1, production.size());
 
                 preNonTerminals.add(left);
-                Set<Integer> tmpFirstSet = lr1.initialCalculateFirst(right, preNonTerminals); // 一个产生式的first集
+                Set<Integer> tmpFirstSet = lr1.initialCalculateFirstSet(right, preNonTerminals); // 一个产生式的first集
                 preNonTerminals.remove(left);
 
                 firstSet.addAll(tmpFirstSet);
             }
 
-            lr1.getNonTerminalFirstSet().put(left, firstSet);
+            if(!lr1.getNonTerminalFirstSet().containsKey(left)){
+                lr1.getNonTerminalFirstSet().put(left, firstSet);
+            }
+            else{
+                lr1.getNonTerminalFirstSet().get(left).addAll(firstSet);
+            }
 
+
+        }
+
+    }
+
+    // 生成LR1状态图
+    public static void generateLR1Dfa(LR1 lr1){
+        // 获取文法开始符号的产生式（唯一的）
+        Integer startNonTerminalId = lr1.getStartNonTerminalId();
+        Integer startProductionId = lr1.getNonTerminalToProductionIds().get(startNonTerminalId).get(0);
+
+        // 第一个item
+        LR1Item startItem = new LR1Item();
+        startItem.setProductionId(startProductionId);
+        startItem.setPredictSymbol(lr1.getDollarId()); // 设置初始的预测符
+
+        // 第一个state
+        Integer startStateId = getLr1StateId();
+
+        LR1State startState = new LR1State();
+        startState.getItems().add(startItem);
+        startState = lr1.innerExpand(startState);
+
+        startState.setStateId(startStateId);
+        lr1.getStateToStateId().put(startState, startStateId);
+        lr1.setStartState(startState);
+
+        // 开始不断扩展状态
+        Queue<LR1State> queue = new ArrayDeque<>();
+        queue.add(startState);
+        while(!queue.isEmpty()){
+            LR1State curState = queue.poll();
+            List<LR1State> nextStates = lr1.outerExpand(curState); // 获得的是之前没出现过的状态
+            for (LR1State nextState : nextStates) { // 如果为空，本轮就不会添加任何状态
+                int stateId = getLr1StateId();
+                nextState.setStateId(stateId);
+                lr1.getStateToStateId().put(nextState, stateId);
+
+                queue.add(nextState);
+            }
         }
 
 
     }
+
 
     public static LR1 buildLR1(ParseResult parseResult){
         LR1 lr1 = new LR1();
@@ -203,6 +251,7 @@ public class LR1Builder {
         assignID(lr1, parseResult);
         encodeProduction(lr1, parseResult);
         calculateFirstSet(lr1);
+        generateLR1Dfa(lr1);
 
         return lr1;
     }
