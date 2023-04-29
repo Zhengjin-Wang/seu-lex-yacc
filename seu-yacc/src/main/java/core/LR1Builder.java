@@ -232,13 +232,18 @@ public class LR1Builder {
         while(!queue.isEmpty()){
             LR1State curState = queue.poll();
             List<LR1State> nextStates = lr1.outerExpand(curState); // 获得的是之前没出现过的状态
-            for (LR1State nextState : nextStates) { // 如果为空，本轮就不会添加任何状态
+            for (LR1State nextState : nextStates) { // 如果为空，本轮就不会添加任何状态，不为空则添加状态
                 int stateId = getLr1StateId();
                 nextState.setStateId(stateId);
                 lr1.getStateToStateId().put(nextState, stateId);
 
                 queue.add(nextState);
             }
+
+//            for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
+//                System.out.println(lr1State.getStateId() + " : " + lr1State.getItems());
+//            }
+//            System.out.println("-----------------------");
         }
 
     }

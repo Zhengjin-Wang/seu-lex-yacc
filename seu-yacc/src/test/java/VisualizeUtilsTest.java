@@ -1,6 +1,7 @@
 import core.LR1Builder;
 import core.YaccParser;
 import dto.LR1;
+import dto.LR1State;
 import dto.ParseResult;
 import org.junit.Test;
 import utils.VisualizeUtils;
@@ -50,13 +51,16 @@ public class VisualizeUtilsTest {
     @Test
     // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数
     public void visualizeLR1Test(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test.y");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test2.y");
         ParseResult parseResult = YaccParser.getParseResult(file);
         LR1 lr1 = new LR1();
         LR1Builder.assignID(lr1, parseResult);
         LR1Builder.encodeProduction(lr1, parseResult);
         LR1Builder.calculateFirstSet(lr1);
         LR1Builder.generateLR1Dfa(lr1);
+//        for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
+//            System.out.println(lr1State.getStateId() + " : " + lr1State.getItems());
+//        }
         VisualizeUtils.visualizeLR1(lr1, workDir);
     }
 

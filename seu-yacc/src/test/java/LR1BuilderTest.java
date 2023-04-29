@@ -1,8 +1,11 @@
 import core.LR1Builder;
 import core.YaccParser;
 import dto.LR1;
+import dto.LR1Item;
+import dto.LR1State;
 import dto.ParseResult;
 import org.junit.Test;
+import utils.VisualizeUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -95,6 +98,25 @@ public class LR1BuilderTest {
         lr1.getNonTerminalFirstSet().forEach( (k, v)->{
             System.out.println(k + ":" + v);
         });
+    }
+
+    @Test
+    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数
+    public void buildLR1Test(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.y");
+        ParseResult parseResult = YaccParser.getParseResult(file);
+
+        LR1 lr1 = LR1Builder.buildLR1(parseResult);
+//        for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
+//            System.out.println(lr1State.getStateId());
+//            for (LR1Item item : lr1State.getItems()) {
+//                System.out.println(lr1.getProductionIdToProduction().get(item.getProductionId()));
+//                System.out.println(item);
+//            }
+//            System.out.println("--------------------------------------");
+//        }
+        System.out.println(lr1.getStateToStateId().size());
+//        VisualizeUtils.visualizeLR1(lr1, workDir);
     }
 
 }

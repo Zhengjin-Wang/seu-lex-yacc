@@ -37,10 +37,17 @@ public class LR1State {
         if(items.size() != lr1State.items.size()){
             return false;
         }
-        lr1State.sortItems();
-        this.sortItems();
+//        lr1State.sortItems();
+//        this.sortItems();
+//
+//        return  this.items.equals(lr1State.items);
+        // 排序会影响可视化中item的顺序
 
-        return  this.items.equals(lr1State.items);
+        for (LR1Item item : lr1State.getItems()) {
+            if(!this.items.contains(item)) return false;
+        }
+
+        return true;
 
     }
 

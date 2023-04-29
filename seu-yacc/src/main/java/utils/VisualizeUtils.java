@@ -13,7 +13,7 @@ import java.util.*;
 public class VisualizeUtils {
 
     // 生成graphviz有向图说明文件的字符串
-    public static String generateGraphvizString(LR1 lr1){
+    public static String generateGraphvizString(LR1 lr1, boolean asciiWithQuote){
 
         StringBuilder mainPart = new StringBuilder();
 
@@ -56,15 +56,22 @@ public class VisualizeUtils {
 
                 for (int i = 1; i < production.size(); i++) {
                     if(item.getDotPos() == i){ // 这个地方前边要加·
+                        if(i > 1) {
+                            nodeLabel.deleteCharAt(nodeLabel.length() - 1); // 去掉上一个空格
+                        }
                         nodeLabel.append("·");
                     }
                     Integer symbolId = production.get(i);
                     String symbolName = lr1.getNumberToSymbol().get(symbolId);
+                    if (!asciiWithQuote && symbolId >= 0 && symbolId < 128){
+                        symbolName = symbolName.substring(1,2);
+                    }
                     nodeLabel.append(symbolName);
                     nodeLabel.append(" ");
                 }
 
                 if(item.isReducible(lr1)){ // 能规约的话，在最后加一个点
+                    nodeLabel.deleteCharAt(nodeLabel.length() - 1); // 去掉上一个空格
                     nodeLabel.append("· ");
                 }
 
@@ -75,6 +82,9 @@ public class VisualizeUtils {
 
                 for (Integer predictSymbol : mergedItems.get(item)) {
                     String predictSymbolName = lr1.getNumberToSymbol().get(predictSymbol);
+                    if(!asciiWithQuote && predictSymbol >= 0 && predictSymbol < 128){
+                        predictSymbolName = predictSymbolName.substring(1, 2);
+                    }
                     nodeLabel.append(predictSymbolName + "|");
                 }
 
@@ -95,6 +105,9 @@ public class VisualizeUtils {
             Integer curStateId = curState.getStateId();
             for (Integer symbolId : curState.getEdges().keySet()) {
                 String symbolName = lr1.getNumberToSymbol().get(symbolId);
+                if (!asciiWithQuote && symbolId >= 0 && symbolId < 128){
+                    symbolName = symbolName.substring(1,2);
+                }
                 LR1State nextState = curState.getEdges().get(symbolId);
                 Integer nextStateId = nextState.getStateId();
 
@@ -119,6 +132,10 @@ public class VisualizeUtils {
                 + "}";
 
         return rsl;
+    }
+
+    public static String generateGraphvizString(LR1 lr1){
+        return generateGraphvizString(lr1, false);
     }
 
     // 生成graphviz有向图说明文件

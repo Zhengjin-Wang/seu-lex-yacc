@@ -51,8 +51,46 @@ public class LR1 {
      * @return 生成的新状态集合（没有之前已经出现过的状态），返回后要在LR1Builder中给它们设置编号，然后把新状态加到队列里继续外扩展
      */
     public List<LR1State> outerExpand(LR1State lr1State){
-        // 先对所有初始次状态做内扩展，无论是否重复，用对应symbol编号连上这个状态，判断是否重复，不重复就加到返回集合中，后续设置编号并加入队列
+        // 先求出初始次状态
+        // 然后对初始次状态做内扩展，无论是否重复，用对应symbol编号连上这个状态，判断是否重复，不重复就加到返回集合中，后续设置编号并加入队列
         List<LR1State> newStates = new ArrayList<>();
+
+        Map<Integer, List<LR1Item>> symbolToItems = new LinkedHashMap<>(); // 将item按移进符号分类，对应的是移进该symbol后的item
+        // 先按symbol划分好item，构建初始的新状态
+        for (LR1Item item : lr1State.getItems()) {
+            if(item.isReducible(this)){ // 可规约的item就不会有移进了
+                continue;
+            }
+            Integer shiftSymbol = item.getCurrentSymbolFromLR1(this);
+            LR1Item nextItem = new LR1Item(item.getProductionId(), item.getDotPos() + 1, item.getPredictSymbol()); // 移进操作
+            if(!symbolToItems.containsKey(shiftSymbol)){
+                symbolToItems.put(shiftSymbol, new ArrayList<>());
+            }
+            symbolToItems.get(shiftSymbol).add(nextItem);
+        }
+
+        for (Integer shiftSymbol : symbolToItems.keySet()) {
+            List<LR1Item> initItems = symbolToItems.get(shiftSymbol);
+            LR1State state = new LR1State();
+            state.getItems().addAll(initItems);
+            innerExpand(state); // 先进行内扩展
+
+            boolean repeat = false;
+            for (LR1State oldState : stateToStateId.keySet()) {
+                if(oldState.equalItems(state)){
+                    repeat = true;
+                    state = oldState; // 有重复的，边加在原来的state上
+                    break;
+                }
+            }
+
+            lr1State.getEdges().put(shiftSymbol, state);
+
+            if(!repeat){
+                newStates.add(state);
+            }
+
+        }
 
         return newStates;
     }
