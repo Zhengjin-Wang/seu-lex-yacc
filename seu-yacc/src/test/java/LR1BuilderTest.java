@@ -152,12 +152,13 @@ public class LR1BuilderTest {
     public void buildLALRFromLR1Test(){
         File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test2.y");
         ParseResult parseResult = YaccParser.getParseResult(file);
-        LR1 lr1 = new LR1();
-        LR1Builder.assignID(lr1, parseResult);
-        LR1Builder.encodeProduction(lr1, parseResult);
-        LR1Builder.calculateFirstSet(lr1);
-        LR1Builder.generateLR1Dfa(lr1);
-        LR1Builder.buildLALRFromLR1(lr1);
+//        LR1 lr1 = new LR1();
+//        LR1Builder.assignID(lr1, parseResult);
+//        LR1Builder.encodeProduction(lr1, parseResult);
+//        LR1Builder.calculateFirstSet(lr1);
+//        LR1Builder.generateLR1Dfa(lr1);
+//        LR1Builder.buildLALRFromLR1(lr1);
+        LR1 lr1 = LR1Builder.buildLALR(parseResult);
 //        for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
 //            System.out.println(lr1State.getStateId() + " : " + lr1State.getItems());
 //        }
@@ -173,6 +174,38 @@ public class LR1BuilderTest {
             System.out.println(sb);
         });
         VisualizeUtils.visualizeLR1(lr1, workDir);
+    }
+
+    @Test
+    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数，已完成
+    public void showPriorityTest(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.y");
+        ParseResult parseResult = YaccParser.getParseResult(file);
+        LR1 lr1 = LR1Builder.buildLR1(parseResult);
+//        for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
+//            System.out.println(lr1State.getStateId() + " : " + lr1State.getItems());
+//        }
+        lr1.getSymbolToNumber().forEach((k, v)->{
+            if(!(v>=0 && v < 128)) {
+                System.out.println(k + ":" + v + " , priority: " + lr1.getSymbolPriority().get(v) + " , associativity: " + lr1.getSymbolAssociativity().get(v));
+            }
+        });
+        System.out.println("--------------------");
+        lr1.getNonTerminalToProductionIds().forEach(
+                (k, v)->{
+                    System.out.println(k + "\t" + lr1.getNumberToSymbol().get(k));
+                    System.out.println(v);
+                }
+        );
+        System.out.println("--------------------");
+       lr1.getProductionIdToProduction().forEach(
+               (k, v)->{
+                   System.out.println(k + " : " + v + " , priority: " + lr1.getProductionPriority().get(k));
+        }
+       );
+
+
+
     }
 
 }

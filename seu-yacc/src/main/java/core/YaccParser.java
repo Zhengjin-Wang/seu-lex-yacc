@@ -149,15 +149,7 @@ public class YaccParser {
             }
 
         }
-        // System.out.println(aliasToCType);
-        // System.out.println(parseResult.getTokens());
-        // System.out.println(parseResult.getSymbolToCType());
-        // System.out.println(parseResult.getStartSymbol());
-        // System.out.println(parseResult.getSymbolPriority());
-        // System.out.println(parseResult.getSymbolAssociativity());
 
-//        System.out.println(parseResult.getPreCopy());
-//        System.out.println(parseResult.getUserCopy());
     }
 
     public static void setProductionPriority(ParseResult parseResult){
@@ -167,7 +159,7 @@ public class YaccParser {
             for (List<String> rightPart : rightPartSet) { // 遍历不同的右部
                 List<String> production = new ArrayList();
                 production.add(leftPart);
-                Integer priority = 0;
+                Integer priority = null; // 默认优先级为null
 
                 for (int i = 0; i < rightPart.size(); i++) {
                     String symbol = rightPart.get(i);
@@ -196,7 +188,7 @@ public class YaccParser {
             for (List<String> rightPart : rightPartSet) { // 遍历不同的右部
                 List<String> production = new ArrayList();
                 production.add(leftPart);
-                Integer priority = 0;
+                Integer priority = null;
 
                 for (int i = 0; i < rightPart.size(); i++) {
                     String symbol = rightPart.get(i);

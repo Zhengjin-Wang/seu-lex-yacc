@@ -9,4 +9,6 @@ public class SpSymbol {
     // 自定的文法开始符号，保证文法开始符号不会出现在右部，S'->%start, $
     public static final String START = "S'";
 
+    public static final Integer acceptActionId = -1;
+
 }

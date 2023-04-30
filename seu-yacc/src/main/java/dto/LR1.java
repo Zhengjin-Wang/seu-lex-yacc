@@ -1,5 +1,6 @@
 package dto;
 
+import constant.Associativity;
 import constant.SpSymbol;
 import lombok.Data;
 
@@ -12,6 +13,8 @@ public class LR1 {
     private Integer epsilonId; // epsilon的终结符编号
     private Integer dollarId; // dollar的终结符编号
     private Integer startNonTerminalId; // 文法开始符编号
+
+    private Set<Integer> occurredSymbols; // 出现过的symbol，用于可视化，action表只列出出现过的终结符
 
     private LR1State startState; // LR1Dfa的开始状态
     private Map<LR1State, Integer> stateToStateId = new LinkedHashMap<>(); // 状态到状态号的映射，用于判断重复的状态，linkedHashMap是为了生成LALR时合并状态的代表状态是状态号最小的
@@ -35,6 +38,8 @@ public class LR1 {
 
     // 终结符编号-优先级
     private Map<Integer, Integer> symbolPriority = new HashMap<>();
+    // 终结符编号-结合性
+    private Map<Integer, Associativity> symbolAssociativity = new HashMap<>();
     // 产生式编号-优先级
     private Map<Integer, Integer> productionPriority = new HashMap<>();
 
@@ -43,6 +48,21 @@ public class LR1 {
 
     // 非终结符是否有空串，如果不在map里，说明还未被计算出来
     private Map<Integer, Boolean> nonTerminalHasEpsilon = new HashMap<>();
+
+    public Set<Integer> getOccurredSymbols(){
+        if(occurredSymbols != null){
+            return occurredSymbols;
+        }
+        occurredSymbols = new HashSet<>();
+        for (List<Integer> production : productionIdToProduction.values()) {
+            for (Integer symbol : production) {
+                occurredSymbols.add(symbol);
+            }
+        }
+        occurredSymbols.add(dollarId);
+
+        return occurredSymbols;
+    }
 
     /**
      * 对dotPos == production.size()的item，就不需要移动了，已到达可规约状态

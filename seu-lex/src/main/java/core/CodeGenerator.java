@@ -190,7 +190,7 @@ public class CodeGenerator {
                 "// * ============== copyPart ================\n");
         stringBuilder.append(parseResult.getPreCopy());
 
-        stringBuilder.append("// * ========== seulex generation ============\n");
+        stringBuilder.append("// * ========== seu-lex generation ============\n");
         stringBuilder.append(generatePreContent(dfa));
         stringBuilder.append(generateTransMatrix(dfa));
         stringBuilder.append(generateSwitchCase(dfa));

@@ -13,7 +13,7 @@ import java.util.*;
 public class VisualizeUtils {
 
     // 生成graphviz有向图说明文件的字符串
-    public static String generateGraphvizString(LR1 lr1, boolean asciiWithQuote){
+    private static String generateGraphvizString(LR1 lr1, boolean asciiWithQuote){
 
         StringBuilder mainPart = new StringBuilder();
 

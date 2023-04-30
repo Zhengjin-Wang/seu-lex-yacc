@@ -1,3 +1,4 @@
+import core.CodeGenerator;
 import core.LR1Builder;
 import core.YaccParser;
 import dto.LR1;
@@ -20,9 +21,12 @@ public class YaccMain {
             }
             System.out.println("Running...");
             ParseResult parseResult = YaccParser.getParseResult(file);
-            LR1 lr1 = LR1Builder.buildLR1(parseResult);
+//            LR1 lr1 = LR1Builder.buildLR1(parseResult);
             // LALR优化
-            LR1 lalr = LR1Builder.buildLALRFromLR1(lr1); // 可选项
+            LR1 lalr = LR1Builder.buildLALR(parseResult); // 可选项
+
+            String yTabHCode = CodeGenerator.generateYTabH(lalr);
+            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lalr);
 
 
         }

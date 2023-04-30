@@ -1,5 +1,6 @@
 package core;
 
+import constant.Associativity;
 import constant.SpSymbol;
 import dto.*;
 
@@ -55,7 +56,7 @@ public class LR1Builder {
         startProduction.add(SpSymbol.START);
         startProduction.add(parseResult.getStartSymbol());
         parseResult.getExtendedProductionList().add(0, startProduction);
-        parseResult.getExtendedProductionPriority().put(startProduction, 0);
+        parseResult.getExtendedProductionPriority().put(startProduction, null);
 
 
         // 分配定义的非终结符
@@ -71,15 +72,25 @@ public class LR1Builder {
 //            System.out.println(k + " : " + v);
 //        });
 
-        // 设置终结符优先级
+        // 设置终结符优先级，只有.y文件里设置了的终结符才有优先级，有优先级一定有结合性，没设置的默认优先级为0，结合性为LEFT
         for (String s : parseResult.getSymbolPriority().keySet()) {
             Integer index = lr1.getSymbolToNumber().get(s);
             if(index == null){ // parseResult.symbolPriority 的key不一定是终结符，也可能是给%prec的一个符号，用于判断产生式优先级
                 continue;
             }
             Integer priority = parseResult.getSymbolPriority().get(s);
+            Associativity associativity = parseResult.getSymbolAssociativity().get(s);
             lr1.getSymbolPriority().put(index, priority);
+            lr1.getSymbolAssociativity().put(index, associativity);
         }
+
+        // 需要分配默认的优先级和结合性吗? 暂时不分配，产生式若未设置优先级也是null
+//        for (Integer symbol : lr1.getNumberToSymbol().keySet()) {
+//            if(symbol >= 0 && !lr1.getSymbolPriority().containsKey(symbol)){ // 一个终结符，而且没有优先级，分配0作为优先级
+//                lr1.getSymbolPriority().put(symbol, 0);
+//                lr1.getSymbolAssociativity().put(symbol, Associativity.LEFT);
+//            }
+//        }
 
     }
 
@@ -114,7 +125,7 @@ public class LR1Builder {
             }
 
             // productionPriority productions numberToProduction
-            int priority = parseResult.getExtendedProductionPriority().get(strings);
+            Integer priority = parseResult.getExtendedProductionPriority().get(strings);
             lr1.getProductionPriority().put(pid, priority);
             if(!lr1.getNonTerminalToProductionIds().containsKey(left)){
                 lr1.getNonTerminalToProductionIds().put(left, new ArrayList<>());
@@ -267,7 +278,7 @@ public class LR1Builder {
         return lr1;
     }
 
-    public static LR1 buildLALRFromLR1(LR1 lr1){
+    private static LR1 buildLALRFromLR1(LR1 lr1){
 
         Map<Set<LR1ItemCore>, LR1State> stateCoreToNewState = new HashMap<>(); // state核-新状态的所有item
         Map<Integer, Integer> oldStateIdToNewStateId = new HashMap<>(); // 旧状态号-新的代表状态号（同state核集合中的首个state）
@@ -320,5 +331,13 @@ public class LR1Builder {
 
         return lr1;
     }
+
+    public static LR1 buildLALR(ParseResult parseResult){
+        LR1 lr1 = buildLR1(parseResult);
+        LR1 lalr = buildLALRFromLR1(lr1);
+        return lalr;
+    }
+
+
 
 }
