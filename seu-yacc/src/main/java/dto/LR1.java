@@ -14,7 +14,10 @@ public class LR1 {
     private Integer startNonTerminalId; // 文法开始符编号
 
     private LR1State startState; // LR1Dfa的开始状态
-    private Map<LR1State, Integer> stateToStateId = new HashMap<>(); // 状态到状态号的映射，用于判断重复的状态
+    private Map<LR1State, Integer> stateToStateId = new LinkedHashMap<>(); // 状态到状态号的映射，用于判断重复的状态，linkedHashMap是为了生成LALR时合并状态的代表状态是状态号最小的
+    private Map<Integer, LR1State> stateIdToState = new LinkedHashMap<>(); // 状态号-状态
+    private Map<Integer, Map<Integer, Integer>> transGraph = new HashMap<>(); // 状态 --symbol--> 状态
+    private Map<Integer, Map<Integer, Integer>> lalrTransGraph = new HashMap<>();
 
     // symbol(包括终结符和非终结符）的标号和字符串形式的双向映射，0~127是ASCII字符，大于等于128是自定义终结符，小于等于-1是自定义非终结符
     private Map<Integer, String> numberToSymbol = new HashMap<>(); // 方便可视化
@@ -44,16 +47,17 @@ public class LR1 {
     /**
      * 对dotPos == production.size()的item，就不需要移动了，已到达可规约状态
      *
-     * 对已经进行内部扩展的LR1状态进行外部扩展，根据kernel向右移动点，生成多个初始次状态，
+     * 对已经进行内部扩展的LR1状态进行外部扩展，根据core向右移动点，生成多个初始次状态，
      * 先对所有初始次状态做内扩展，然后用对应symbol编号连上这个状态，
      * 然后判断是否和之前的状态重复，只保留之前没生成过的状态，返回到LR1Builder中，设置状态号，然后把新状态加到队列里继续外扩展
      * @param lr1State
      * @return 生成的新状态集合（没有之前已经出现过的状态），返回后要在LR1Builder中给它们设置编号，然后把新状态加到队列里继续外扩展
      */
-    public List<LR1State> outerExpand(LR1State lr1State){
+    public Map<Integer, LR1State> outerExpand(LR1State lr1State){
         // 先求出初始次状态
         // 然后对初始次状态做内扩展，无论是否重复，用对应symbol编号连上这个状态，判断是否重复，不重复就加到返回集合中，后续设置编号并加入队列
-        List<LR1State> newStates = new ArrayList<>();
+        // List<LR1State> newStates = new ArrayList<>();
+        Map<Integer, LR1State> newStates = new LinkedHashMap<>();
 
         Map<Integer, List<LR1Item>> symbolToItems = new LinkedHashMap<>(); // 将item按移进符号分类，对应的是移进该symbol后的item
         // 先按symbol划分好item，构建初始的新状态
@@ -80,6 +84,7 @@ public class LR1 {
                 if(oldState.equalItems(state)){
                     repeat = true;
                     state = oldState; // 有重复的，边加在原来的state上
+                    transGraph.get(lr1State.getStateId()).put(shiftSymbol, oldState.getStateId()); // 在状态图里也加上
                     break;
                 }
             }
@@ -87,7 +92,7 @@ public class LR1 {
             lr1State.getEdges().put(shiftSymbol, state);
 
             if(!repeat){
-                newStates.add(state);
+                newStates.put(shiftSymbol, state);
             }
 
         }

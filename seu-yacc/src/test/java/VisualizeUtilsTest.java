@@ -49,7 +49,7 @@ public class VisualizeUtilsTest {
     }
 
     @Test
-    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数
+    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数，已完成
     public void visualizeLR1Test(){
         File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test2.y");
         ParseResult parseResult = YaccParser.getParseResult(file);

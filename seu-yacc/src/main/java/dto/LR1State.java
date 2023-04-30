@@ -13,23 +13,34 @@ import java.util.*;
 public class LR1State {
 
     private Integer stateId;
-    private Map<Integer, LR1State> edges = new HashMap<>(); // --symbol编号 -> 对应下一个状态
-    private List<LR1Item> items = new ArrayList<>(); // 所有的item
+    private Map<Integer, LR1State> edges = new HashMap<>(); // --symbol编号--> 对应下一个状态
+    private Set<LR1Item> items = new LinkedHashSet<>(); // 所有的item
+    private Set<LR1ItemCore> lr1StateCore; // 状态的核（不包含预测符的部分）
 
-    public void sortItems(){
-        Collections.sort(this.items, new Comparator<LR1Item>() {
-            @Override
-            public int compare(LR1Item o1, LR1Item o2) {
-                if (o1.equals(o2)) return 0;
-                boolean b =  o1.getProductionId() == o2.getProductionId() ?
-                        ( o1.getDotPos() == o2.getDotPos() ?
-                                o1.getPredictSymbol() < o2.getPredictSymbol()
-                                :o1.getDotPos() < o2.getDotPos() ):
-                        o1.getProductionId() < o2.getProductionId();
-                return b?-1:1;
+    public Set<LR1ItemCore> getLr1StateCore(){
+        if(lr1StateCore == null){
+            lr1StateCore = new HashSet<>();
+            for (LR1Item item : items) {
+                lr1StateCore.add(item.getLr1ItemCore());
             }
-        });
+        }
+        return lr1StateCore;
     }
+
+//    public void sortItems(){
+//        Collections.sort(this.items, new Comparator<LR1Item>() {
+//            @Override
+//            public int compare(LR1Item o1, LR1Item o2) {
+//                if (o1.equals(o2)) return 0;
+//                boolean b =  o1.getProductionId() == o2.getProductionId() ?
+//                        ( o1.getDotPos() == o2.getDotPos() ?
+//                                o1.getPredictSymbol() < o2.getPredictSymbol()
+//                                :o1.getDotPos() < o2.getDotPos() ):
+//                        o1.getProductionId() < o2.getProductionId();
+//                return b?-1:1;
+//            }
+//        });
+//    }
 
     // 不知道可不可以优化
     public boolean equalItems(LR1State lr1State) {

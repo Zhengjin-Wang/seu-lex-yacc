@@ -20,7 +20,11 @@ public class YaccMain {
             }
             System.out.println("Running...");
             ParseResult parseResult = YaccParser.getParseResult(file);
-            LR1Builder.buildLR1(parseResult);
+            LR1 lr1 = LR1Builder.buildLR1(parseResult);
+            // LALR优化
+            LR1 lalr = LR1Builder.buildLALRFromLR1(lr1); // 可选项
+
+
         }
 
     }

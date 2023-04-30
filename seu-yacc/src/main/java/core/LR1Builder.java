@@ -1,10 +1,7 @@
 package core;
 
 import constant.SpSymbol;
-import dto.LR1;
-import dto.LR1Item;
-import dto.LR1State;
-import dto.ParseResult;
+import dto.*;
 
 import java.util.*;
 
@@ -224,6 +221,10 @@ public class LR1Builder {
 
         startState.setStateId(startStateId);
         lr1.getStateToStateId().put(startState, startStateId);
+        lr1.getStateIdToState().put(startStateId, startState);
+        if(!lr1.getTransGraph().containsKey(startStateId)) {
+            lr1.getTransGraph().put(startStateId, new HashMap<>());
+        }
         lr1.setStartState(startState);
 
         // 开始不断扩展状态
@@ -231,11 +232,17 @@ public class LR1Builder {
         queue.add(startState);
         while(!queue.isEmpty()){
             LR1State curState = queue.poll();
-            List<LR1State> nextStates = lr1.outerExpand(curState); // 获得的是之前没出现过的状态
-            for (LR1State nextState : nextStates) { // 如果为空，本轮就不会添加任何状态，不为空则添加状态
+            Map<Integer, LR1State> nextStates = lr1.outerExpand(curState); // 获得的是之前没出现过的状态
+            for (Integer shiftSymbol : nextStates.keySet()) { // 如果为空，本轮就不会添加任何状态，不为空则添加状态
+                LR1State nextState = nextStates.get(shiftSymbol);
                 int stateId = getLr1StateId();
                 nextState.setStateId(stateId);
                 lr1.getStateToStateId().put(nextState, stateId);
+                lr1.getStateIdToState().put(stateId, nextState);
+                if(!lr1.getTransGraph().containsKey(stateId)){
+                    lr1.getTransGraph().put(stateId, new HashMap<>()); // 新添加的状态先加到转移图里
+                }
+                lr1.getTransGraph().get(curState.getStateId()).put(shiftSymbol, stateId); // 连上边，注意在outerExpand里还要连上重复的状态
 
                 queue.add(nextState);
             }
@@ -256,6 +263,60 @@ public class LR1Builder {
         encodeProduction(lr1, parseResult);
         calculateFirstSet(lr1);
         generateLR1Dfa(lr1);
+
+        return lr1;
+    }
+
+    public static LR1 buildLALRFromLR1(LR1 lr1){
+
+        Map<Set<LR1ItemCore>, LR1State> stateCoreToNewState = new HashMap<>(); // state核-新状态的所有item
+        Map<Integer, Integer> oldStateIdToNewStateId = new HashMap<>(); // 旧状态号-新的代表状态号（同state核集合中的首个state）
+
+        // 找到旧项集-新项集（同stateCore集合的代表状态）映射，把新项集预测符扩展为旧项集的所有预测符
+        for (LR1State state : lr1.getStateToStateId().keySet()) { // 如果StateToStateId用LinkedHashMap，状态号小的就成为代表状态，否则顺序不确定，不知道顺序有什么影响
+            Set<LR1ItemCore> stateCore = state.getLr1StateCore();
+
+            int newStateId = state.getStateId();
+            LR1State newState = stateCoreToNewState.get(stateCore);
+
+            if(newState == null){ // 遇到了新的stateCore
+                stateCoreToNewState.put(stateCore, state);
+            }
+            else{
+                newStateId = stateCoreToNewState.get(stateCore).getStateId();
+                newState.getItems().addAll(state.getItems());
+            }
+
+            oldStateIdToNewStateId.put(state.getStateId(), newStateId);
+
+        }
+
+        // 遍历旧的transGraph，根据oldStateIdToNewStateId构造lalrTransGraph，并修改每个state的边
+        for (Integer fromState : lr1.getTransGraph().keySet()) {
+            Integer mapState = oldStateIdToNewStateId.get(fromState);
+            if (!fromState.equals(mapState)){ //只有新状态旧-新状态号映射是相同的，抛弃那些被代表的状态
+                continue;
+            }
+            lr1.getLalrTransGraph().put(fromState, new HashMap<>());
+            Map<Integer, Integer> edges = lr1.getTransGraph().get(fromState);
+            LR1State concreteFromState = lr1.getStateIdToState().get(fromState);
+            Map<Integer, LR1State> newOwnEdges = new HashMap<>(); // 当前state自己的状态，因为visual部分用的是指针形式，得改它的边
+            for (Integer shiftSymbol : edges.keySet()) {
+                Integer nextState = edges.get(shiftSymbol);
+                Integer toState = oldStateIdToNewStateId.get(nextState);
+
+                lr1.getLalrTransGraph().get(fromState).put(shiftSymbol, toState); // 先在转移图设置
+
+                LR1State concreteToState = lr1.getStateIdToState().get(toState);
+                newOwnEdges.put(shiftSymbol, concreteToState); // 还要设置本节点的边
+            }
+            concreteFromState.setEdges(newOwnEdges); // 还要设置本节点的边
+        }
+
+//        System.out.println(stateCoreToNewState.size());
+//        System.out.println(oldStateIdToNewStateId);
+//        System.out.println(lr1.getTransGraph().size());
+//        System.out.println(lr1.getLalrTransGraph().size());
 
         return lr1;
     }

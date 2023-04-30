@@ -51,7 +51,7 @@ public class VisualizeUtils {
                 else if (c == '\t') displayStr = "[\\\\t]";
                 else if (c == '\n') displayStr = "[\\\\n]";
                 else if (c == '\r') displayStr = "[\\\\r]";
-                else if (c == SpAlpha.ANY) displayStr = "ANY";
+                else if (c == SpAlpha.ANY) displayStr = "OTHER"; // 这个时候ANY边是在其他显式边走不通（当前读入字符不在显式边字符里）的情况下走的，可以理解为OTHER，保证无论读入什么字符，这个状态都能转移出去
                 for(Integer end:ends){
                     String edge = String.format("%d -> %d[label=\"%s\"]\n", begin, end, displayStr);
                     mainPart.append(edge);

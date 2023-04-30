@@ -13,6 +13,8 @@ import java.util.List;
 
 public class LR1BuilderTest {
 
+    public static final String workDir = "D:\\SEU DOCUMENTS\\编译原理实践\\graphviz";
+
     @Test
     public void encodeProductionTest(){
         File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.y");
@@ -117,6 +119,60 @@ public class LR1BuilderTest {
 //        }
         System.out.println(lr1.getStateToStateId().size());
 //        VisualizeUtils.visualizeLR1(lr1, workDir);
+    }
+
+    @Test
+    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数，已完成
+    public void generateTransGraphTest(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test2.y");
+        ParseResult parseResult = YaccParser.getParseResult(file);
+        LR1 lr1 = new LR1();
+        LR1Builder.assignID(lr1, parseResult);
+        LR1Builder.encodeProduction(lr1, parseResult);
+        LR1Builder.calculateFirstSet(lr1);
+        LR1Builder.generateLR1Dfa(lr1);
+//        for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
+//            System.out.println(lr1State.getStateId() + " : " + lr1State.getItems());
+//        }
+        lr1.getTransGraph().forEach((k,v)->{
+            System.out.println(k);
+            System.out.println(lr1.getStateIdToState().get(k).getLr1StateCore());
+            StringBuilder sb = new StringBuilder();
+            for (Integer symbol : v.keySet()) {
+                String symbolName = lr1.getNumberToSymbol().get(symbol);
+                sb.append("-" + symbolName + "-> " + v.get(symbol) + ", ");
+            }
+            System.out.println(sb);
+        });
+        // VisualizeUtils.visualizeLR1(lr1, workDir);
+    }
+
+    @Test
+    // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数，已完成
+    public void buildLALRFromLR1Test(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test2.y");
+        ParseResult parseResult = YaccParser.getParseResult(file);
+        LR1 lr1 = new LR1();
+        LR1Builder.assignID(lr1, parseResult);
+        LR1Builder.encodeProduction(lr1, parseResult);
+        LR1Builder.calculateFirstSet(lr1);
+        LR1Builder.generateLR1Dfa(lr1);
+        LR1Builder.buildLALRFromLR1(lr1);
+//        for (LR1State lr1State : lr1.getStateToStateId().keySet()) {
+//            System.out.println(lr1State.getStateId() + " : " + lr1State.getItems());
+//        }
+        System.out.println("LALR graph size: " + lr1.getLalrTransGraph().size());
+        lr1.getLalrTransGraph().forEach((k,v)->{
+            System.out.println(k);
+            System.out.println(lr1.getStateIdToState().get(k).getLr1StateCore());
+            StringBuilder sb = new StringBuilder();
+            for (Integer symbol : v.keySet()) {
+                String symbolName = lr1.getNumberToSymbol().get(symbol);
+                sb.append("-" + symbolName + "-> " + v.get(symbol) + ", ");
+            }
+            System.out.println(sb);
+        });
+        VisualizeUtils.visualizeLR1(lr1, workDir);
     }
 
 }
