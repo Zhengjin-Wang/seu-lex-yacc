@@ -81,6 +81,7 @@ public class LexParser {
         int parenthesis = 0; // 遇左括号加1，遇右括号减一
         int bracket = 0;
         int curBracket = 0;
+        int actionCurBracket = 0;
         boolean quote = false; // 遇引号改变状态
         boolean slash = false; // 正在转义
         //上边四个变量只有1阶段有效
@@ -177,6 +178,7 @@ public class LexParser {
                     if(!StringUtils.isBlankChar(c)){
                         --i; // 回退，以便写入stringbuilder
                         if(c == '{'){
+                            actionCurBracket = 0;
                             status = 4;
                         }
                         else{
@@ -207,7 +209,12 @@ public class LexParser {
 
                 case 4:
                     if(c == '}'){
+
                         action.append(c);
+                        --actionCurBracket;
+                        // System.out.println(actionCurBracket);
+                        if(actionCurBracket > 0) break;
+
                         rawRegexAction.put(regex.toString(), action.toString());
                         regex = new StringBuilder();
                         action = new StringBuilder();
@@ -222,6 +229,7 @@ public class LexParser {
                     }
 
                     action.append(c);
+                    if(c == '{') ++actionCurBracket;
 
                     break;
 

@@ -105,7 +105,7 @@ public class LR1BuilderTest {
     @Test
     // 只测试了node的生成，还没测试edge的生成，需要完成outerExpand函数
     public void buildLR1Test(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.y");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test3.y");
         ParseResult parseResult = YaccParser.getParseResult(file);
 
         LR1 lr1 = LR1Builder.buildLR1(parseResult);
@@ -118,7 +118,12 @@ public class LR1BuilderTest {
 //            System.out.println("--------------------------------------");
 //        }
         System.out.println(lr1.getStateToStateId().size());
-//        VisualizeUtils.visualizeLR1(lr1, workDir);
+        lr1.getProductionIdToProduction().forEach(
+                (k,v)->{
+                    System.out.println(k + ":" + v);
+        }
+        );
+        VisualizeUtils.visualizeLR1(lr1, workDir);
     }
 
     @Test

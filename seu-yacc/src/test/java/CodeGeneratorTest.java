@@ -11,12 +11,23 @@ public class CodeGeneratorTest {
 
     @Test
     public void generateYTabHTest(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.y");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test3.y");
         ParseResult parseResult = YaccParser.getParseResult(file);
         LR1 lr1 = LR1Builder.buildLR1(parseResult);
 //        LR1 lalr = LR1Builder.buildLALRFromLR1(lr1);
 
         System.out.println(CodeGenerator.generateYTabH(lr1));
+
+    }
+
+    @Test
+    public void generateTableTest(){
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test3.y");
+        ParseResult parseResult = YaccParser.getParseResult(file);
+        LR1 lr1 = LR1Builder.buildLR1(parseResult);
+//        LR1 lalr = LR1Builder.buildLALRFromLR1(lr1);
+
+        System.out.println(CodeGenerator.generateTable(lr1, lr1.getTransGraph()));
 
     }
 

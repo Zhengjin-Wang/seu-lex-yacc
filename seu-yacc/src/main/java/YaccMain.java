@@ -26,7 +26,7 @@ public class YaccMain {
             LR1 lalr = LR1Builder.buildLALR(parseResult); // 可选项
 
             String yTabHCode = CodeGenerator.generateYTabH(lalr);
-            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lalr);
+            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lalr, lalr.getLalrTransGraph());
 
 
         }

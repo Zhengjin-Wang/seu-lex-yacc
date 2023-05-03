@@ -34,6 +34,7 @@ public class LR1Builder {
             int id = getTerminalId();
             lr1.getSymbolToNumber().put(terminal, id);
             lr1.getNumberToSymbol().put(id, terminal);
+
         }
 
         // 分配特殊字符
@@ -92,6 +93,17 @@ public class LR1Builder {
 //            }
 //        }
 
+        // 可能存在着union定义
+        for (String symbol : lr1.getSymbolToNumber().keySet()) {
+            if(parseResult.getSymbolToUnionAttr().containsKey(symbol)){
+                int symbolId = lr1.getSymbolToNumber().get(symbol);
+                String unionAttr = parseResult.getSymbolToUnionAttr().get(symbol);
+                lr1.getSymbolToUnionAttr().put(symbolId, unionAttr);
+            }
+        }
+
+        lr1.setUnionString(parseResult.getUnionString());
+
     }
 
     // @deprecated（旧注释） 开头为'说明是ASCII终结符，{说明要生成一个哑元非终结符，加到numberToSymbol和dummyNonTerminalAction中，否则判断是否在terminals或nonterminals，取出对应编码
@@ -118,6 +130,7 @@ public class LR1Builder {
                         String action = lr1.getProductionAction().get(pid) + symbol;
                         lr1.getProductionAction().put(pid, action);
                     } else {
+                        // System.out.println(symbol);
                         int number = lr1.getSymbolToNumber().get(symbol); // 获取终结符或非终结符的编号
                         production.add(number);
                     }

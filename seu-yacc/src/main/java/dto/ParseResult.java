@@ -14,7 +14,9 @@ public class ParseResult {
     // part1获取的信息
     private String startSymbol; // 文法开始符号
     private List<String> terminals = new ArrayList<>(); // 终结符集合
-    private Map<String, String> symbolToCType = new HashMap<>(); // 终结符或非终结符有具体值时，对应的C语言中的值类型
+    // private Map<String, String> symbolToCType = new HashMap<>(); // 终结符或非终结符有具体值时，对应的C语言中的值类型
+    private Map<String, String> symbolToUnionAttr = new HashMap<>(); // symbol对应union里的属性
+    private String unionString;
     private Map<String, Integer> symbolPriority = new HashMap<>(); // 终结符的优先级，数值越大优先级越高，key不一定在terminals中，有可能只出现在规则部分，只是用来声明优先级用的
     private Map<String, Associativity> symbolAssociativity = new HashMap<>(); // 终结符的结合性
 

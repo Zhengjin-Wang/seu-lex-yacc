@@ -46,6 +46,71 @@ public class TableGenerator {
         return -columnIndex - 1;
     }
 
+    // 包含action表和goto表
+    public String getTableString(){
+        StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append("productions:\n");
+        for (Integer pid : lr1.getProductionIdToProduction().keySet()) {
+            stringBuilder.append(pid + "\t");
+            List<Integer> production = lr1.getProductionIdToProduction().get(pid);
+            int left = production.get(0);
+            stringBuilder.append(lr1.getNumberToSymbol().get(left) + " -> ");
+            for (int i = 1; i < production.size(); i++) {
+                int symbol = production.get(i);
+                stringBuilder.append(lr1.getNumberToSymbol().get(symbol) + " ");
+            }
+            stringBuilder.append("\n");
+
+        }
+
+        int row = 0;
+
+        int col = this.getActionTable()[0].length;
+        stringBuilder.append("table\t\t");
+        for (int i = 0; i < col; i++) {
+            if(lr1.getOccurredSymbols().contains(i)){
+                stringBuilder.append(lr1.getNumberToSymbol().get(i) + "\t");
+            }
+        }
+        col = this.getNonTerminalCount();
+        for (int i = 0; i < col; i++) {
+            Integer symbolId = this.convertGotoTableColumnIndexToSymbolId(i);
+            stringBuilder.append(lr1.getNumberToSymbol().get(symbolId) + "\t");
+        }
+        stringBuilder.append("\n");
+
+        for (int[] ints : this.getActionTable()) {
+            int state = this.getTableRowIndexToStateId().get(row);
+            stringBuilder.append("sta:" + state+ "\t\t");
+            int j = 0;
+            for (int anInt : ints) {
+
+                if(lr1.getOccurredSymbols().contains(j)) {
+                    if(anInt > 0){
+                        anInt = this.getTableRowIndexToStateId().get(anInt);
+                    }
+                    stringBuilder.append(anInt + "\t");
+                }
+                ++j;
+            }
+            for (int nextState : this.getGotoTable()[row]) {
+                if(nextState > 0){
+                    nextState = this.getTableRowIndexToStateId().get(nextState);
+                }
+                stringBuilder.append(nextState + "\t");
+            }
+            stringBuilder.append("\n");
+            ++row;
+        }
+
+        return stringBuilder.toString();
+    }
+
+    public void printTable(){
+        System.out.println(getTableString());
+    }
+
     // 表中项0代表报错，大于0表示移进字符并转移到那个状态，小于0表示用哪个产生式规约
     private void generateActionTable(){
         for (Integer stateId : graph.keySet()) {

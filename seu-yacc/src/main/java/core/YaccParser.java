@@ -35,7 +35,7 @@ public class YaccParser {
         // 如果没有%start，将grammar部分出现的第一个非终结符作为start
 
         String[] lines = definition.split("[\n\r]");
-        Map<String,String> aliasToCType = new HashMap<>();
+        // Map<String,String> aliasToCType = new HashMap<>();
         int priority = 0;
 
         for (int i = 0; i < lines.length; ++i) {
@@ -59,54 +59,67 @@ public class YaccParser {
                 }
             }
             else if(type.equals("%union")){ // %union之后必有{
-                String[] splitArray = line.split("\\{");
-                if(splitArray.length > 1 && splitArray[1].trim().length() > 0){
-                    line = splitArray[1].trim();
-                }
-                else{
+
+                StringBuilder unionBuilder = new StringBuilder();
+                String[] splitArray = line.split("%");
+                unionBuilder.append(splitArray[1] + "\\\n");
+                do {
                     ++i;
                     line = lines[i].trim();
-                }
-                do{
+                    unionBuilder.append(line + "\\\n");
+                }while (!line.contains("}"));
+                parseResult.setUnionString(unionBuilder.toString());
 
-                    String[] pair = line.split("[\t ]");
-
-                    String cType = pair[0];
-
-                    String endPart = pair[pair.length - 1];
-                    String alias = endPart.split(";")[0];
-
-                    aliasToCType.put(alias, cType); // 加入映射
-
-                    // 判断行尾}
-                    if(endPart.split(";").length > 1 && endPart.split(";")[1].contains("}")){
-                        break;
-                    }
-
-                    do {
-                        ++i;
-                        line = lines[i].trim();
-                        if(line.length() > 0) break;
-                    }while (true);
-
-                    // System.out.println(line);
-
-                    if(line.trim().charAt(0) == '}') break;
-
-                }while (true);
+//                String[] splitArray = line.split("\\{");
+//                if(splitArray.length > 1 && splitArray[1].trim().length() > 0){
+//                    line = splitArray[1].trim();
+//                }
+//                else{
+//                    ++i;
+//                    line = lines[i].trim();
+//                }
+//                do{
+//
+//                    String[] pair = line.split("[\t ]");
+//
+//                    String cType = pair[0];
+//
+//                    String endPart = pair[pair.length - 1];
+//                    String alias = endPart.split(";")[0];
+//
+//                    aliasToCType.put(alias, cType); // 加入映射
+//
+//                    // 判断行尾}
+//                    if(endPart.split(";").length > 1 && endPart.split(";")[1].contains("}")){
+//                        break;
+//                    }
+//
+//                    do {
+//                        ++i;
+//                        line = lines[i].trim();
+//                        if(line.length() > 0) break;
+//                    }while (true);
+//
+//                    // System.out.println(line);
+//
+//                    if(line.trim().charAt(0) == '}') break;
+//
+//                }while (true);
             }
             else if(type.equals("%type")){ // 应该保证%union出现在%type之前，且%type中的type都在%union中出现过
-                String cType = null;
+                // String cType = null;
+                String alias = null;
                 for (int j = 1; j < lineSplit.length; ++j){
                     String token = lineSplit[j].trim();
                     if(token.length() != 0){
                         if(token.charAt(0) == '/') break; // 开始注释
                         if (token.charAt(0) == '<'){
-                            String alias = token.substring(1, token.length() - 1);
-                            cType = aliasToCType.get(alias);
+                            alias = token.substring(1, token.length() - 1);
+                            // cType = aliasToCType.get(alias);
                         }
                         else {
-                            parseResult.getSymbolToCType().put(token, cType);
+                           //  parseResult.getSymbolToCType().put(token, cType);
+                            parseResult.getSymbolToUnionAttr().put(token, alias);
                         }
                     }
                 }

@@ -31,7 +31,7 @@ public class LR1 {
     private Map<Integer, List<Integer>> nonTerminalToProductionIds = new HashMap<>();
 
     // key 是产生式编号，value是编码后的产生式
-    private Map<Integer, List<Integer>> productionIdToProduction = new HashMap<>(); // 由产生式序号得到产生式（编码后的symbol序列）
+    private Map<Integer, List<Integer>> productionIdToProduction = new LinkedHashMap<>(); // 由产生式序号得到产生式（编码后的symbol序列） 1号是acc S'-> S
     // private Map<List<Integer>, Integer> productionToNumber = new HashMap<>(); // 由产生式得到产生式序号
     // key 是产生式编号，value是动作C代码
     private Map<Integer, String> productionAction = new HashMap<>(); // 有语义动作的产生式才会出现在这个map里，目前只支持语义动作出现在产生式最后，而且只有$$=$1+$2这种赋值操作
@@ -48,6 +48,10 @@ public class LR1 {
 
     // 非终结符是否有空串，如果不在map里，说明还未被计算出来
     private Map<Integer, Boolean> nonTerminalHasEpsilon = new HashMap<>();
+
+    // symbol编号 - node.val.<type>
+    private Map<Integer, String> symbolToUnionAttr = new HashMap<>();
+    private String unionString;
 
     public Set<Integer> getOccurredSymbols(){
         if(occurredSymbols != null){

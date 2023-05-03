@@ -26,6 +26,7 @@ public class LexMain {
             }
             System.out.println("Running...");
             ParseResult parseResult = LexParser.getParseResult(file);
+//            System.out.println(parseResult.getRegexAction());
             NFA nfa = NFABuilder.buildNFA(parseResult);
             DFA bigDfa = DFABuilder.buildDFA(nfa);
             DFA dfa = DFABuilder.minimizeDFA(bigDfa);
