@@ -182,7 +182,7 @@ public class CodeGenerator {
                 generateSwitchAction(dfa) +
                 "        }\n" +
                 "      } else return -1; // error\n" +
-                "      return 0; // FIXME!\n" +
+                "      return -2; // FIXME!\n" +
                 "    }\n";
     }
 

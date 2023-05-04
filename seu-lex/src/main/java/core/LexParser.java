@@ -60,6 +60,9 @@ public class LexParser {
 
     /**
      * 得到原始的regex-action映射（未替换alias）
+     * 实际正则表达式中 ["]表示中括号里的双引号
+     * 但这个函数解析的时候会提高"的优先级，只要遇到"就认为出现字符串，实际上应该先遇到[进入中括号状态，先遇到"进入双引号状态
+     * 所以在这里之只能用[\"]的形式
      * @param rulePart
      * @return
      */
@@ -89,6 +92,7 @@ public class LexParser {
         StringBuilder regex = new StringBuilder();
         StringBuilder action = new StringBuilder();
         for(int i = 0; i < rulePart.length(); ++i){
+
             char c = rulePart.charAt(i);
             if(slash){
                 if(status == 1) {
@@ -129,6 +133,7 @@ public class LexParser {
                     if(parenthesis == 0 && bracket == 0 && curBracket == 0 && quote == false && slash == false){ //这时后边跟\n不跟action? 不考虑了，按空白符处理
 
                         if(StringUtils.isBlankChar(c)){
+
                             --i;
                             status = 2;
                             break;
@@ -164,7 +169,14 @@ public class LexParser {
                         }
                     }
                     else if(c == '"'){
-                        quote = true;
+
+                        if(bracket == 0) { // 之前没有[，才进入引号状态
+                            quote = true;
+                        }
+                        else{
+                            regex.append('\\'); // 否则就加个转义字符模拟转义后的引号
+                        }
+
                     }
                     else if(c == '\\'){
                         slash = true;
@@ -211,7 +223,10 @@ public class LexParser {
                     if(c == '}'){
 
                         action.append(c);
-                        --actionCurBracket;
+                        if(rulePart.charAt(i - 1) != '\'') { // 单引号之间的}不算
+                            --actionCurBracket;
+                        }
+
                         // System.out.println(actionCurBracket);
                         if(actionCurBracket > 0) break;
 
@@ -229,7 +244,7 @@ public class LexParser {
                     }
 
                     action.append(c);
-                    if(c == '{') ++actionCurBracket;
+                    if(c == '{' && rulePart.charAt(i - 1) != '\'') ++actionCurBracket;
 
                     break;
 

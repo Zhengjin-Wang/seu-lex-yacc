@@ -33,7 +33,7 @@ public class LexParserTest {
 
     @Test
     public void actionOrderTest(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\minic.l");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\c99.l");
         ParseResult parseResult = LexParser.getParseResult(file);
         Map<String, String> regexAction = parseResult.getRegexAction();
         for(Map.Entry<String, String> entry: regexAction.entrySet()){

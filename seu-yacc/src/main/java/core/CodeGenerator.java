@@ -43,9 +43,13 @@ public class CodeGenerator {
                 "\tYYSTYPE val;\n" +
                 "\tstruct Node* children[PRODUCTION_MAX_LEN];\n" +
                 "\tint children_num;\n" +
+                "\tint nodeId; // 用于标记节点\n" +
                 "};\n" +
+                "int node_cnt = 0;\n" +
+                "int getNodeId() { return node_cnt++; }\n" +
                 "struct Node* createNode() {\n" +
                 "\tstruct Node* node = (struct Node*)malloc(sizeof(struct Node));\n" +
+                "\tnode->nodeId = getNodeId();\n" +
                 "\treturn node;\n" +
                 "}\n" +
                 "struct Node* root; // 语法树的根节点\n";
@@ -74,6 +78,10 @@ public class CodeGenerator {
                 "\tprintf(\"Error occurred in grammar!\");\n" +
                 "}\n" +
                 "\n" +
+                "void errorLexical(void) {\n" +
+                "\tprintf(\"Error occurred in lexical!\");\n" +
+                "}\n" +
+                "\n" +
                 "void stackOverflow(void) {\n" +
                 "\tprintf(\"Stack overflow!\");\n" +
                 "}\n" +
@@ -87,6 +95,7 @@ public class CodeGenerator {
                 "  atexit(func);\n" +
                 "  exit(EXIT_FAILURE);\n" +
                 "}\n" +
+                "FILE* graphviz_file;\n" +
                 generateNode(lr1)+ "\n" +
                 "struct Node* symbol_stack[SYMBOL_STACK_LIMIT];\n" +
                 "int state_stack[STATE_STACK_LIMIT];\n" +
@@ -306,12 +315,24 @@ public class CodeGenerator {
                 "\tprintf(\"|\");\n" +
                 "\tif (node->symbolId >= 0) { // 终结符\n" +
                 "\t\tprintf(\"%s\\n\", symbolIdToString(node->symbolId));\n" +
+                "\t\tfprintf(graphviz_file, \"%d [label = \\\"%s\\\"]\\n\", node->nodeId, symbolIdToString(node->symbolId));\n" +
                 "\t\treturn;\n" +
                 "\t}\n" +
                 "\tprintf(\"%s\\n\", production_string[node->pid]);\n" +
+                "\tfprintf(graphviz_file, \"%d [label = \\\"%s\\\"]\\n\", node->nodeId, production_string[node->pid]);\n" +
                 "\tfor (int i = 1; i <= node->children_num; ++i) {\n" +
+                "\t\tfprintf(graphviz_file, \"%d -> %d\\n\", node->nodeId, node->children[i]->nodeId);\n" +
                 "\t\tprintGrammarTree(node->children[i], depth + 1);\n" +
                 "\t}\n" +
+                "}\n" +
+                "\n" +
+                "void outputGraphvizFile() {\n" +
+                "\tgraphviz_file = fopen(\"grammar_tree.dot\", \"w\");\n" +
+                "\tfprintf(graphviz_file, \"digraph G{ \\n rankdir = TB \\n node[shape = box] \\n node[fontname = \\\"SimHei\\\"] \\n edge[fontname = \\\"SimHei\\\"] \\n\");\n" +
+                "\tprintGrammarTree(root, 0);\n" +
+                "\tfprintf(graphviz_file, \"}\");\n" +
+                "\tfflush(graphviz_file);\n" +
+                "\tsystem(\"dot -Tpng grammar_tree.dot -o grammar_tree.png -Gdpi=150\");\n" +
                 "}\n";
     }
 
@@ -320,8 +341,15 @@ public class CodeGenerator {
                 "\tint start_state = " + lr1.getStartState().getStateId() + "; // 需要在java里设置\n" +
                 "\tint token = 0;\n" +
                 "\tpushStateStack(start_state);\n" +
-                "\twhile (token != END_OF_TOKEN_STREAM && (token = yylex()) >= 0) { // 遇到EOF会跳出循环\n" +
+                "\twhile (token != END_OF_TOKEN_STREAM && (token = yylex()) >= -2) { // 遇到EOF会跳出循环\n" +
                 "\t\t\n" +
+                "\t\tif (token == -1) { // error\n" +
+                "\t\t\tthrow(errorLexical);\n" +
+                "\t\t\treturn -1;\n" +
+                "\t\t}\n" +
+                "\n" +
+                "\t\tif (token == -2) continue; // white space\n" +
+                "\n" +
                 "\t\tif (token == 0) token = END_OF_TOKEN_STREAM;\n" +
                 "\n" +
                 "\t\tint action = action_table[stateStackTop()][token];\n" +

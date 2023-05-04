@@ -285,8 +285,14 @@ public class LR1Builder {
 
         assignID(lr1, parseResult);
         encodeProduction(lr1, parseResult);
+        long startTime = System.currentTimeMillis();
         calculateFirstSet(lr1);
+        long endTime = System.currentTimeMillis();
+        System.out.println("计算first集时间：" + (endTime - startTime) + " 毫秒");
+        startTime = System.currentTimeMillis();
         generateLR1Dfa(lr1);
+        endTime = System.currentTimeMillis();
+        System.out.println("计算LR1状态转移图时间：" + (endTime - startTime) + " 毫秒");
 
         return lr1;
     }

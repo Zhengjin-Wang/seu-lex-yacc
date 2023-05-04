@@ -8,7 +8,10 @@ import org.junit.Test;
 import utils.VisualizeUtils;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 public class TableGeneratorTest {
 
@@ -61,16 +64,26 @@ public class TableGeneratorTest {
 
     @Test
     public void initializerLALRTest(){
-        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\test2.y");
+        File file = new File("C:\\Users\\Lilac\\Desktop\\新建文件夹\\c99.y");
         ParseResult parseResult = YaccParser.getParseResult(file);
         LR1 lr1 = LR1Builder.buildLR1(parseResult);
         TableGenerator tableGenerator = new TableGenerator(lr1, lr1.getTransGraph());
 //        LR1 lr1 = LR1Builder.buildLALR(parseResult);
 //        TableGenerator tableGenerator = new TableGenerator(lr1, lr1.getLalrTransGraph());
 
-        System.out.println(tableGenerator.getTableString());
+        //System.out.println(tableGenerator.getTableString());
+        Set<Integer> set = lr1.getNumberToSymbol().keySet();
+        List<Integer> list = new ArrayList<>(set);
+        Collections.sort(list);
+        for (Integer id : list) {
+            if(id >=0 && id <128) continue;
+            String s = lr1.getNumberToSymbol().get(id);
+            System.out.println(s + " : " + id);
+        }
 
-        VisualizeUtils.visualizeLR1(lr1, workDir);
+
+
+        //VisualizeUtils.visualizeLR1(lr1, workDir);
 
 //        System.out.println("productions:");
 //        for (Integer pid : lr1.getProductionIdToProduction().keySet()) {

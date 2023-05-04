@@ -24,14 +24,16 @@ public class YaccMain {
             }
             System.out.println("Running...");
             ParseResult parseResult = YaccParser.getParseResult(file);
-            LR1 lr1 = LR1Builder.buildLR1(parseResult);
+
             // LALR优化
-//            LR1 lalr = LR1Builder.buildLALR(parseResult); // 可选项
-//            String yTabHCode = CodeGenerator.generateYTabH(lalr);
-//            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lalr, lalr.getLalrTransGraph());
+            LR1 lalr = LR1Builder.buildLALR(parseResult); // 可选项
+            String yTabHCode = CodeGenerator.generateYTabH(lalr);
+            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lalr, lalr.getLalrTransGraph());
 //            VisualizeUtils.visualizeLR1(lalr);
-            String yTabHCode = CodeGenerator.generateYTabH(lr1);
-            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr1, lr1.getTransGraph());
+
+//            LR1 lr1 = LR1Builder.buildLR1(parseResult);
+//            String yTabHCode = CodeGenerator.generateYTabH(lr1);
+//            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr1, lr1.getTransGraph());
 //            VisualizeUtils.visualizeLR1(lr1);
 
             File yTabHFile = new File("y.tab.h");

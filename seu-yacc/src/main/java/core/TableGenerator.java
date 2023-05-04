@@ -142,12 +142,13 @@ public class TableGenerator {
                     Associativity shiftAssociativity = lr1.getSymbolAssociativity().get(predictSymbol);
                     Integer reducePriority = lr1.getProductionPriority().get(productionId);
 
+                    if(shiftPriority == null){
+                        shiftPriority = 0;
+                        shiftAssociativity = Associativity.LEFT; // 默认左结合
+                    }
                     if(reducePriority == null){ // 产生式没优先级就看结合性了
                         reducePriority = shiftPriority;
                     }
-//                    if(shiftPriority == null){
-//                        shiftPriority = 0;
-//                    }
 
                     if(shiftPriority == null || reducePriority == null){
                         throw new RuntimeException("undefined priority but with shift/reduce conflict");
