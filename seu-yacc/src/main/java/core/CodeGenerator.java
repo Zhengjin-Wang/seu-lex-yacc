@@ -73,13 +73,13 @@ public class CodeGenerator {
                 "extern char yytext[];\n" +
                 "extern int yylex();\n" +
                 "extern YYSTYPE yylval;\n" +
+                "extern int yylineno;\n" +
                 "\n" +
                 "void errorGrammar(void) {\n" +
-                "\tprintf(\"Error occurred in grammar!\");\n" +
+                "\tprintf(\"Grammar error occured!\");\n" +
                 "}\n" +
-                "\n" +
                 "void errorLexical(void) {\n" +
-                "\tprintf(\"Error occurred in lexical!\");\n" +
+                "\tprintf(\"Lexical error occured!\");\n" +
                 "}\n" +
                 "\n" +
                 "void stackOverflow(void) {\n" +
@@ -88,10 +88,8 @@ public class CodeGenerator {
                 "void popEmptyStack(void) {\n" +
                 "\tprintf(\"Pop empty stack!\");\n" +
                 "}\n" +
-                "void syntaxError(void) {\n" +
-                "\tprintf(\"Syntax error!\");\n" +
-                "}\n" +
                 "void throw(void (*func)(void)){\n" +
+                "\tprintf(\"Error occurred in line %d, before word %s.\\n\", yylineno, yytext);\n" +
                 "  atexit(func);\n" +
                 "  exit(EXIT_FAILURE);\n" +
                 "}\n" +
@@ -389,7 +387,8 @@ public class CodeGenerator {
                 "\t\t\tpushStateStack(action);\n" +
                 "\t\t\tstruct Node* node = createNode();\n" +
                 "\t\t\tnode->symbolId = token;\n" +
-                "\t\t\tnode->val = yylval;\n" +
+                "\t\t\t// node->val = yylval;\n" +
+                "\t\t\tmemcpy((void*) &(node->val), (void*) &yylval, sizeof(YYSTYPE));\n" +
                 "\t\t\tpushSymbolStack(node);\n" +
                 "\t\t}\n" +
                 "\t\t\n" +

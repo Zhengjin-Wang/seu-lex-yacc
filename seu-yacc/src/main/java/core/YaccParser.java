@@ -244,6 +244,8 @@ public class YaccParser {
         boolean isProduction = false;
         boolean isRightPart = false;
         boolean isAction = false;
+        boolean quoteInAction = false;
+        int curBracket = 0;
         StringBuilder stringBuilder = new StringBuilder();
         String leftPart = new String();
 
@@ -322,6 +324,7 @@ public class YaccParser {
                             stringBuilder = new StringBuilder();
                             stringBuilder.append(c);
                             isAction = true;
+                            curBracket = 1;
                         }
                         else if(c == '|') { // 结束了一个产生式
 
@@ -363,12 +366,21 @@ public class YaccParser {
 
                     }
                 }
-                else{ // {}中的内容
+                else{ // {}中的内容 即action
                     stringBuilder.append(c);
-                    if(c == '}'){ // 这就要求{}里边的内容不能含有}，如printf("}")，一般也不应该出现
-                        extendedProduction.add(stringBuilder.toString()); // 这里加的是具体动作代码，实际可以转换为哑元M->ε，规约时执行动作
-                        stringBuilder = new StringBuilder();
-                        isAction = false;
+                    if(c == '"' && grammar.charAt(i-1) != '\\'){
+                        quoteInAction = !quoteInAction;
+                    }
+                    else if(c == '{' && grammar.charAt(i-1) != '\'' && !quoteInAction){
+                        ++curBracket;
+                    }
+                    else if(c == '}' && grammar.charAt(i-1) != '\'' && !quoteInAction){ // 这就要求{}里边的内容不能含有}，如printf("}")，一般也不应该出现
+                        --curBracket;
+                        if(curBracket == 0) {
+                            extendedProduction.add(stringBuilder.toString()); // 这里加的是具体动作代码，实际可以转换为哑元M->ε，规约时执行动作
+                            stringBuilder = new StringBuilder();
+                            isAction = false;
+                        }
                     }
                 }
 
