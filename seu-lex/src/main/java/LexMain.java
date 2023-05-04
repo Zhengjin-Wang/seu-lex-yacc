@@ -47,6 +47,8 @@ public class LexMain {
              *
              */
 
+            // 可视化
+//            VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
 
             // 生成c文件
             File yyFile = new File("yy.seulex.c");
@@ -58,9 +60,6 @@ public class LexMain {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-
-            // 可视化
-            VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
 
         }
     }

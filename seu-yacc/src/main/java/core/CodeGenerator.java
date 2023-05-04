@@ -7,6 +7,8 @@ import dto.ParseResult;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.Math.max;
+
 public class CodeGenerator {
     /**
      *  1. 生成action表和goto表的时候，先遍历edges，找到移进的项（此时不会有冲突），终结符填在action表里，非终结符填在goto表里，填的是下一个状态号
@@ -28,41 +30,11 @@ public class CodeGenerator {
      *  如果symbolId>=0，指针指向与终结符类型对应的struct（比如标识符会有符号信息，字面常量会有数值信息）
       */
 
-    // 可有可无
-    public static String generateException() {
-        return "void ArrayUpperBoundExceeded(void) {\n" +
-                "    printf(\"Array upper bound exceeded!\");\n" +
-                "  }\n" +
-                "  void ArrayLowerBoundExceeded(void) {\n" +
-                "    printf(\"Array lower bound exceeded!\");\n" +
-                "  }\n" +
-                "  void SomethingRedefined(void) {\n" +
-                "    printf(\"Something redefined!\");\n" +
-                "  }\n" +
-                "  void SyntaxError(void) {\n" +
-                "    printf(\"Syntax error!\");\n" +
-                "  }\n" +
-                "  void throw(void (*func)(void)) {\n" +
-                "    atexit(func);\n" +
-                "    exit(EXIT_FAILURE);\n" +
-                "  }\n";
-    }
-
-    // 必要
-    public static String generateExtern() {
-        return "extern FILE *yyin;\n" +
-                "extern char yytext[];\n" +
-                "extern int yylex();\n" +
-                "extern FILE *yyout;\n" +
-                "extern YYSTYPE yylval;\n";
-    }
-
-
     // 必要
     public static String generateNode(LR1 lr1) {
         int productionMaxLen = 0;
         for (List<Integer> production : lr1.getProductionIdToProduction().values()) {
-            productionMaxLen = Math.max(production.size() + 1, productionMaxLen);
+            productionMaxLen = max(production.size() + 1, productionMaxLen);
         }
         return "#define PRODUCTION_MAX_LEN " + productionMaxLen + "\n" +
                 "struct Node {\n" +
@@ -72,61 +44,15 @@ public class CodeGenerator {
                 "\tstruct Node* children[PRODUCTION_MAX_LEN];\n" +
                 "\tint children_num;\n" +
                 "};\n" +
+                "struct Node* createNode() {\n" +
+                "\tstruct Node* node = (struct Node*)malloc(sizeof(struct Node));\n" +
+                "\treturn node;\n" +
+                "}\n" +
                 "struct Node* root; // 语法树的根节点\n";
 
-//                "  int nodeNum = 0;\n" +
-//                "  void reduceNode(int num) {\n" +
-//                "    struct Node *newNode = (struct Node *)malloc(sizeof(struct Node));\n" +
-//                "    char *nonterminal = curToken;\n" +
-//                "    if (nonterminal == NULL) nonterminal = curAttr;\n" +
-//                "    newNode->childNum = num;\n" +
-//                "    newNode->value = (char *)malloc(sizeof(char) * strlen(nonterminal));\n" +
-//                "    newNode->yytext = (char *)malloc(sizeof(char) * strlen(curAttr));\n" +
-//                "    strcpy(newNode->value, nonterminal);\n" +
-//                "    strcpy(newNode->yytext, curAttr);\n" +
-//                "    for (int i = 1; i <= num; i++) {\n" +
-//                "      newNode->children[num-i] = nodes[nodeNum-i];\n" +
-//                "      nodes[nodeNum-i] = NULL;\n" +
-//                "    }\n" +
-//                "    nodeNum = nodeNum - num;\n" +
-//                "    nodes[nodeNum++] = newNode;\n" +
-//                "  }\n";
+
     }
 
-    // 需要修改，主要是规约时构建node
-    public static String generateFunctions() {
-        return "void updateSymbolAttr(int popNum) {\n" +
-                "    char *temp = (char *)malloc(sizeof(char) * strlen(curAttr));\n" +
-                "    strcpy(temp, curAttr);\n" +
-                "    while (popNum--) {\n" +
-                "      if (symbolAttrSize == 0) throw(ArrayLowerBoundExceeded);\n" +
-                "      free(symbolAttr[--symbolAttrSize]);\n" +
-                "    }\n" +
-                "    if (symbolAttrSize >= SYMBOL_ATTR_LIMIT) throw(ArrayUpperBoundExceeded);\n" +
-                "    symbolAttr[symbolAttrSize] = (char *)malloc(strlen(temp) * sizeof(char));\n" +
-                "    strcpy(symbolAttr[symbolAttrSize++], temp);\n" +
-                "  }\n" +
-                "  int stateStackPop(int popNum) {\n" +
-                "    while (popNum--) {\n" +
-                "      if (stateStackSize == 0) throw(ArrayLowerBoundExceeded);\n" +
-                "      stateStackSize--;\n" +
-                "    }\n" +
-                "    if (stateStackSize == 0) return YACC_NOTHING;\n" +
-                "    else return stateStack[stateStackSize - 1];\n" +
-                "  }\n" +
-                "  void stateStackPush(int state) {\n" +
-                "    if (stateStackSize >= STATE_STACK_LIMIT) throw(ArrayUpperBoundExceeded);\n" +
-                "    stateStack[stateStackSize++] = state;\n" +
-                "  }\n" +
-                "  void reduceTo(char *nonterminal) {\n" +
-                "    if (curToken != NULL) {\n" +
-                "      free(curToken);\n" +
-                "      curToken = NULL;\n" +
-                "    }\n" +
-                "    curToken = (char *)malloc(strlen(nonterminal) * sizeof(char));\n" +
-                "    strcpy(curToken, nonterminal);\n" +
-                "  }\n";
-    }
 
     // 看情况修改
     public static String generatePreSetContent(LR1 lr1){
@@ -134,26 +60,75 @@ public class CodeGenerator {
         return "#include <stdio.h>\n" +
                 "#include <stdlib.h>\n" +
                 "#include <string.h>\n" +
-                "#define STACK_LIMIT 1000\n" +
-                "#define SYMBOL_CHART_LIMIT 10000\n" +
-                "#define SYMBOL_ATTR_LIMIT 10000\n" +
+                "#include \"y.tab.h\"\n" +
+                "#define SYMBOL_STACK_LIMIT 1000\n" +
                 "#define STATE_STACK_LIMIT 10000\n" +
-                "#define YACC_ERROR -1\n" +
-                "#define YACC_NOTHING -2\n" +
-                "#define YACC_ACCEPT -42\n" +
-                generateException()+ "\n" +
-                generateExtern()+ "\n" +
-                "int stateStack[STACK_LIMIT];\n" +
-                "int stateStackSize = 0;\n" +
-                "int debugMode = 0;\n" +
-                "char *symbolAttr[SYMBOL_ATTR_LIMIT];\n" +
-                "int symbolAttrSize = 0;\n" +
-                "char *curAttr = NULL;\n" +
-                "char *curToken = NULL;\n" +
-                "FILE *treeout = NULL;\n" +
-                "int memoryAddrCnt = 0;\n" +
+                "\n" +
+                "extern FILE* yyin;\n" +
+                "extern FILE* yyout;\n" +
+                "extern char yytext[];\n" +
+                "extern int yylex();\n" +
+                "extern YYSTYPE yylval;\n" +
+                "\n" +
+                "void errorGrammar(void) {\n" +
+                "\tprintf(\"Error occurred in grammar!\");\n" +
+                "}\n" +
+                "\n" +
+                "void stackOverflow(void) {\n" +
+                "\tprintf(\"Stack overflow!\");\n" +
+                "}\n" +
+                "void popEmptyStack(void) {\n" +
+                "\tprintf(\"Pop empty stack!\");\n" +
+                "}\n" +
+                "void syntaxError(void) {\n" +
+                "\tprintf(\"Syntax error!\");\n" +
+                "}\n" +
+                "void throw(void (*func)(void)){\n" +
+                "  atexit(func);\n" +
+                "  exit(EXIT_FAILURE);\n" +
+                "}\n" +
                 generateNode(lr1)+ "\n" +
-                generateFunctions()+ "\n";
+                "struct Node* symbol_stack[SYMBOL_STACK_LIMIT];\n" +
+                "int state_stack[STATE_STACK_LIMIT];\n" +
+                "int symbol_stack_ptr = 0;\n" +
+                "int state_stack_ptr = 0;\n" +
+                "\n" +
+                "struct Node* symbolStackTop() {\n" +
+                "\tif (symbol_stack_ptr == 0) {\n" +
+                "\t\tthrow(popEmptyStack);\n" +
+                "\t}\n" +
+                "\treturn symbol_stack[symbol_stack_ptr - 1];\n" +
+                "}\n" +
+                "struct Node* popSymbolStack() {\n" +
+                "\tif (symbol_stack_ptr == 0) {\n" +
+                "\t\tthrow(popEmptyStack);\n" +
+                "\t}\n" +
+                "\treturn symbol_stack[--symbol_stack_ptr];\n" +
+                "}\n" +
+                "void pushSymbolStack(struct Node* symbol) {\n" +
+                "\tif (symbol_stack_ptr == SYMBOL_STACK_LIMIT) {\n" +
+                "\t\tthrow(stackOverflow);\n" +
+                "\t}\n" +
+                "\tsymbol_stack[symbol_stack_ptr++] = symbol;\n" +
+                "}\n" +
+                "int stateStackTop() {\n" +
+                "\tif (state_stack_ptr == 0) {\n" +
+                "\t\tthrow(popEmptyStack);\n" +
+                "\t}\n" +
+                "\treturn state_stack[state_stack_ptr - 1];\n" +
+                "}\n" +
+                "int popStateStack(){\n" +
+                "\tif (state_stack_ptr == 0) {\n" +
+                "\t\tthrow(popEmptyStack);\n" +
+                "\t}\n" +
+                "\treturn state_stack[--state_stack_ptr];\n" +
+                "}\n" +
+                "void pushStateStack(int state) {\n" +
+                "\tif (state_stack_ptr == STATE_STACK_LIMIT) {\n" +
+                "\t\tthrow(stackOverflow);\n" +
+                "\t}\n" +
+                "\tstate_stack[state_stack_ptr++] = state;\n" +
+                "}\n";
     }
 
     /**
@@ -170,6 +145,32 @@ public class CodeGenerator {
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("int nonTerminalToColumnIndex(int i) { return -i - 1; }\n"); // 变换函数
+        stringBuilder.append("int reduceActionToProductionId(int i) { return -i; }\n");
+
+        // ascii
+        StringBuilder asciiTableBuilder = new StringBuilder();
+        for (int i = 0; i < 128; i++) {
+            asciiTableBuilder.append(i + ",0,");
+        }
+        String symbolTableString = String.format("char ascii_string[256] = {%s};\n", asciiTableBuilder.toString());
+        stringBuilder.append(symbolTableString);
+
+        // 生成终结符
+        int symbolNum = 0;
+        StringBuilder symbolTableBuilder = new StringBuilder();
+
+        for (Integer symbolId : lr1.getNumberToSymbol().keySet()) {
+            if(symbolId >= 128){
+                symbolTableBuilder.append("\"" + lr1.getNumberToSymbol().get(symbolId) + "\",");
+                ++symbolNum;
+            }
+        }
+        symbolTableString = String.format("char* symbol_string[%d] = {%s};\n",symbolNum, symbolTableBuilder.toString());
+        stringBuilder.append(symbolTableString);
+        stringBuilder.append("char* symbolIdToString(int i) {\n" +
+                "\tif (i >= 128) return symbol_string[i - 128];\n" +
+                "\treturn ascii_string + (2 * i);\n" +
+                "}\n");
 
         // 开始生成production_table
         StringBuilder productionTableMainPart = new StringBuilder();
@@ -252,19 +253,123 @@ public class CodeGenerator {
 
     /**
      * 根据规约的产生式编号选择动作，在这里要把动作$$ = $1 + $3解析替换一下
+     * 如过要支持自定义YYSTYPE，需要修改这个函数
      * @param lr1
      * @return
      */
     public static String generateActionSwitch(LR1 lr1){
-        return "";
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Integer pid : lr1.getProductionAction().keySet()) {
+            stringBuilder.append("case " + pid + ":\n");
+            String action = lr1.getProductionAction().get(pid);
+            StringBuilder actionBuilder = new StringBuilder();
+            for (int i = 0; i < action.length(); i++) {
+                char c = action.charAt(i);
+                if(c != '$'){
+                    actionBuilder.append(c);
+                }
+                else{
+                    ++i;
+                    c = action.charAt(i);
+                    if(c == '$'){ // 是左部
+                        actionBuilder.append("node->val");
+                    }
+                    else{ // 右部
+                        String number = "";
+                        while(action.charAt(i) >= '0' && action.charAt(i) <= '9'){
+                            number = number + action.charAt(i);
+                            ++i;
+                        }
+                        --i;
+                        actionBuilder.append(String.format("(node->children[%s])->val", number));
+                    }
+                }
+            }
+            stringBuilder.append(actionBuilder);
+            stringBuilder.append("\nbreak;\n");
+        }
+        return "void doSemanticAction(int pid, struct Node* node) {\n" +
+                "\tswitch (pid)\n" +
+                "\t{\n" +
+                stringBuilder.toString() +
+                "\tdefault:\n" +
+                "\t\tbreak;\n" +
+                "\t}\n" +
+                "}\n";
     }
 
     public static String generatePrintGrammarTree(){
-        return "";
+        return "void printGrammarTree(struct Node* node, int depth) {\n" +
+                "\tfor (int i = 0; i < depth; ++i) {\n" +
+                "\t\tprintf(\"\\t\"); // 根据深度确定缩进\n" +
+                "\t}\n" +
+                "\tprintf(\"|\");\n" +
+                "\tif (node->symbolId >= 0) { // 终结符\n" +
+                "\t\tprintf(\"%s\\n\", symbolIdToString(node->symbolId));\n" +
+                "\t\treturn;\n" +
+                "\t}\n" +
+                "\tprintf(\"%s\\n\", production_string[node->pid]);\n" +
+                "\tfor (int i = 1; i <= node->children_num; ++i) {\n" +
+                "\t\tprintGrammarTree(node->children[i], depth + 1);\n" +
+                "\t}\n" +
+                "}\n";
     }
 
     public static String generateYYParse(LR1 lr1){
-        return "";
+        return "int yyparse() {\n" +
+                "\tint start_state = " + lr1.getStartState().getStateId() + "; // 需要在java里设置\n" +
+                "\tint token = 0;\n" +
+                "\tpushStateStack(start_state);\n" +
+                "\twhile (token != END_OF_TOKEN_STREAM && (token = yylex()) >= 0) { // 遇到EOF会跳出循环\n" +
+                "\t\t\n" +
+                "\t\tif (token == 0) token = END_OF_TOKEN_STREAM;\n" +
+                "\n" +
+                "\t\tint action = action_table[stateStackTop()][token];\n" +
+                "\n" +
+                "\t\twhile ((action = action_table[stateStackTop()][token]) < 0) { // 能规约就一直规约，直到把当前token移进，或者一开始就是移进\n" +
+                "\t\t\tif (action == -1) {\n" +
+                "\t\t\t\troot = symbolStackTop(); // 这地方就没S'了\n" +
+                "\t\t\t\treturn 0; // 接受态，成功解析，必须在这返回，不然S'的goto表没有能转移的状态，一定会报错\n" +
+                "\t\t\t}\n" +
+                "\t\t\tint pid = reduceActionToProductionId(action);\n" +
+                "\t\t\tint nonTerminalId = production_table[pid][0];\n" +
+                "\t\t\tint productionLen = production_table[pid][1];\n" +
+                "\n" +
+                "\t\t\tstruct Node* node = createNode();\n" +
+                "\t\t\tnode->symbolId = nonTerminalId;\n" +
+                "\t\t\tnode->pid = pid;\n" +
+                "\t\t\tnode->children_num = productionLen;\n" +
+                "\n" +
+                "\t\t\tfor (int i = productionLen; i >= 1; --i) {\n" +
+                "\t\t\t\tnode->children[i] = popSymbolStack();\n" +
+                "\t\t\t\tpopStateStack();\n" +
+                "\t\t\t}\n" +
+                "\t\t\t// 计算node->val\n" +
+                "\t\t\tdoSemanticAction(pid, node);\n" +
+                "\t\t\tpushSymbolStack(node);\n" +
+                "\t\t\tint col = nonTerminalToColumnIndex(nonTerminalId);\n" +
+                "\t\t\tint curState = stateStackTop();\n" +
+                "\t\t\tint nextState = goto_table[curState][col];\n" +
+                "\t\t\tpushStateStack(nextState);\n" +
+                "\t\t}\n" +
+                "\n" +
+                "\t\tif (action == 0) { // 出错\n" +
+                "\t\t\tthrow(errorGrammar);\n" +
+                "\t\t\treturn -1;\n" +
+                "\t\t}\n" +
+                "\t\telse if (action > 0) { // 移进\n" +
+                "\t\t\tpushStateStack(action);\n" +
+                "\t\t\tstruct Node* node = createNode();\n" +
+                "\t\t\tnode->symbolId = token;\n" +
+                "\t\t\tnode->val = yylval;\n" +
+                "\t\t\tpushSymbolStack(node);\n" +
+                "\t\t}\n" +
+                "\t\t\n" +
+                "\t}\n" +
+                "\n" +
+                "\treturn -1; // 出现异常\n" +
+                "\n" +
+                "}\n";
     }
 
 
@@ -323,11 +428,18 @@ public class CodeGenerator {
             stringBuilder.append(String.format("#define %s %d\n", symbolName, symbol));
         }
 
+        String unionDefine = "";
+        if(lr1.getUnionString() != null){
+            unionDefine = "#define YYSTYPE " + lr1.getUnionString();
+        }
+        else{
+            unionDefine = "#define YYSTYPE int\n";
+        }
+
         String rsl = "#ifndef Y_TAB_H_\n" +
                 "#define Y_TAB_H_\n" +
-                "#define WHITESPACE -10\n" +
                 stringBuilder.toString() +
-                "#define YYSTYPE " + lr1.getUnionString() +
+                unionDefine +
                 "#endif\n";
 
         return rsl;

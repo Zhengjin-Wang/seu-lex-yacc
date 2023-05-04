@@ -23,7 +23,7 @@ public class LR1 {
     private Map<Integer, Map<Integer, Integer>> lalrTransGraph = new HashMap<>();
 
     // symbol(包括终结符和非终结符）的标号和字符串形式的双向映射，0~127是ASCII字符，大于等于128是自定义终结符，小于等于-1是自定义非终结符
-    private Map<Integer, String> numberToSymbol = new HashMap<>(); // 方便可视化
+    private Map<Integer, String> numberToSymbol = new LinkedHashMap<>(); // 方便可视化
     private Map<String, Integer> symbolToNumber = new HashMap<>();
 
     // 非终结符的产生式，可有多个产生式，每个产生式有多个symbol，产生空串的产生式就是一个长度为0的List，key应该<0
