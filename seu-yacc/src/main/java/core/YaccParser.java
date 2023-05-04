@@ -68,6 +68,9 @@ public class YaccParser {
                     line = lines[i].trim();
                     unionBuilder.append(line + "\\\n");
                 }while (!line.contains("}"));
+                unionBuilder.deleteCharAt(unionBuilder.length() - 1); // 去掉最后的\
+                unionBuilder.deleteCharAt(unionBuilder.length() - 1);
+                unionBuilder.append("\n");
                 parseResult.setUnionString(unionBuilder.toString());
 
 //                String[] splitArray = line.split("\\{");

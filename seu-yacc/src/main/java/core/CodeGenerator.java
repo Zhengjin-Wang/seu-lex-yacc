@@ -270,6 +270,8 @@ public class CodeGenerator {
             stringBuilder.append("case " + pid + ":\n");
             String action = lr1.getProductionAction().get(pid);
             StringBuilder actionBuilder = new StringBuilder();
+            List<Integer> production = lr1.getProductionIdToProduction().get(pid); // 用于找到symbolId
+
             for (int i = 0; i < action.length(); i++) {
                 char c = action.charAt(i);
                 if(c != '$'){
@@ -280,6 +282,9 @@ public class CodeGenerator {
                     c = action.charAt(i);
                     if(c == '$'){ // 是左部
                         actionBuilder.append("node->val");
+                        int symbolId = production.get(0);
+                        String unionAttr = lr1.getSymbolToUnionAttr().get(symbolId);
+                        actionBuilder.append("." + unionAttr);
                     }
                     else{ // 右部
                         String number = "";
@@ -289,7 +294,13 @@ public class CodeGenerator {
                         }
                         --i;
                         actionBuilder.append(String.format("(node->children[%s])->val", number));
+
+                        int index = Integer.parseInt(number);
+                        int symbolId = production.get(index);
+                        String unionAttr = lr1.getSymbolToUnionAttr().get(symbolId);
+                        actionBuilder.append("." + unionAttr);
                     }
+
                 }
             }
             stringBuilder.append(actionBuilder);
