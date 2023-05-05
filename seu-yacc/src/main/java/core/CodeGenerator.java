@@ -287,7 +287,9 @@ public class CodeGenerator {
                         actionBuilder.append("node->val");
                         int symbolId = production.get(0);
                         String unionAttr = lr1.getSymbolToUnionAttr().get(symbolId);
-                        actionBuilder.append("." + unionAttr);
+                        if(unionAttr != null) {
+                            actionBuilder.append("." + unionAttr);
+                        }
                     }
                     else{ // 右部
                         String number = "";
@@ -301,7 +303,9 @@ public class CodeGenerator {
                         int index = Integer.parseInt(number);
                         int symbolId = production.get(index);
                         String unionAttr = lr1.getSymbolToUnionAttr().get(symbolId);
-                        actionBuilder.append("." + unionAttr);
+                        if(unionAttr != null) {
+                            actionBuilder.append("." + unionAttr);
+                        }
                     }
 
                 }

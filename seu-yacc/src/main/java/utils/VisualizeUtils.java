@@ -8,6 +8,7 @@ import dto.LR1State;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class VisualizeUtils {
@@ -146,7 +147,7 @@ public class VisualizeUtils {
 
         File file = new File(workDirPath, dotFileName); // 文件名和路径
         try {
-            FileWriter fileWriter = new FileWriter(file);
+            FileWriter fileWriter = new FileWriter(file, StandardCharsets.UTF_8);
             fileWriter.write(content);
             fileWriter.flush();
             fileWriter.close();

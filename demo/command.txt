@@ -1,0 +1,7 @@
+将打包好的jar包和.l .y文件放在同一目录下运行
+
+// calculator
+java -jar seu-lex-1.0-SNAPSHOT.jar calculator.l -v && java -jar seu-yacc-1.0-SNAPSHOT.jar calculator.y -v -lalr && gcc seulex.yy.c y.tab.c -o parser.exe && parser.exe calculator_t.txt 
+
+// c99 不要输出图片，太大
+java -jar seu-lex-1.0-SNAPSHOT.jar c99.l && java -jar seu-yacc-1.0-SNAPSHOT.jar c99.y -lalr && gcc seulex.yy.c y.tab.c -o parser.exe && parser.exe c99_t.txt 
