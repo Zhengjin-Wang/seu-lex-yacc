@@ -199,7 +199,10 @@ public class CodeGenerator {
             productionStringMainPart.append("\"");
             productionStringMainPart.append(lr1.getNumberToSymbol().get(production.get(0)) + " -> ");
             for (int i = 1; i < production.size(); i++) {
-                productionStringMainPart.append( lr1.getNumberToSymbol().get(production.get(i)) + " ");
+                int symbolId = production.get(i);
+                String symbol = lr1.getNumberToSymbol().get(symbolId);
+                // if(symbolId >= 0 && symbolId < 128) symbol = symbol.substring(1,2);
+                productionStringMainPart.append( symbol + " ");
             }
             productionStringMainPart.append("\",\n");
         }

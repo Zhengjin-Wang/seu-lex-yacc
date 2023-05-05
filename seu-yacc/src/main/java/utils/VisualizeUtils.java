@@ -178,7 +178,7 @@ public class VisualizeUtils {
     }
 
     public static void visualizeLR1(LR1 lr1, String workDirPath){
-        visualizeLR1(lr1, workDirPath, "LR1_graph");
+        visualizeLR1(lr1, workDirPath, "LR_graph");
     }
 
     public static void visualizeLR1(LR1 lr1) { visualizeLR1(lr1, "./");}

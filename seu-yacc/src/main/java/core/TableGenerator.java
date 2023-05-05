@@ -265,8 +265,12 @@ public class TableGenerator {
 
         actionTable = new int[stateCount][terminalCount];
         gotoTable = new int[stateCount][nonTerminalCount];
+
+        long startTime = System.currentTimeMillis();
         generateActionTable();
         generateGotoTable();
+        long endTime = System.currentTimeMillis();
+        System.out.println("生成action-goto表时间：" + (endTime - startTime) + " 毫秒");
 
         actionMap = new LinkedHashMap<>();
         gotoMap = new LinkedHashMap<>();

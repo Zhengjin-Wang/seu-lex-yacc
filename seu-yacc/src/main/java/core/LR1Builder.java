@@ -292,7 +292,7 @@ public class LR1Builder {
         startTime = System.currentTimeMillis();
         generateLR1Dfa(lr1);
         endTime = System.currentTimeMillis();
-        System.out.println("计算LR1状态转移图时间：" + (endTime - startTime) + " 毫秒");
+        System.out.println("计算LR状态转移图时间：" + (endTime - startTime) + " 毫秒");
 
         return lr1;
     }

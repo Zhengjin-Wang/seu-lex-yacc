@@ -23,18 +23,34 @@ public class YaccMain {
                 return;
             }
             System.out.println("Running...");
+
+            boolean visualize = false;
+            boolean lalrModified = false;
+            for (int i = 1; i < args.length; i++) {
+                if(args[i].equals("-v")){
+                    visualize = true;
+                }
+                if(args[i].equals("-lalr")){
+                    lalrModified = true;
+                }
+            }
+
             ParseResult parseResult = YaccParser.getParseResult(file);
 
             // LALR优化
-            LR1 lalr = LR1Builder.buildLALR(parseResult); // 可选项
-            String yTabHCode = CodeGenerator.generateYTabH(lalr);
-            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lalr, lalr.getLalrTransGraph());
-//            VisualizeUtils.visualizeLR1(lalr);
+            LR1 lr;
+            if(lalrModified) {
+                lr = LR1Builder.buildLALR(parseResult); // 可选项
+            }
+            else{
+                lr = LR1Builder.buildLR1(parseResult);
+            }
+            String yTabHCode = CodeGenerator.generateYTabH(lr);
+            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr, lr.getLalrTransGraph());
 
-//            LR1 lr1 = LR1Builder.buildLR1(parseResult);
-//            String yTabHCode = CodeGenerator.generateYTabH(lr1);
-//            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr1, lr1.getTransGraph());
-//            VisualizeUtils.visualizeLR1(lr1);
+            if(visualize) {
+                VisualizeUtils.visualizeLR1(lr);
+            }
 
             File yTabHFile = new File("y.tab.h");
             try{

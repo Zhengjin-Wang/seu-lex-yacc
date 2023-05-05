@@ -48,10 +48,12 @@ public class LexMain {
              */
 
             // 可视化
-//            VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
+            if(args.length > 1 && args[1].equals("-v")) {
+                VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
+            }
 
             // 生成c文件
-            File yyFile = new File("yy.seulex.c");
+            File yyFile = new File("seulex.yy.c");
             try {
                 FileWriter fileWriter = new FileWriter(yyFile);
                 fileWriter.write(code);
