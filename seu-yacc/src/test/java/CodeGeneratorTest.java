@@ -28,7 +28,7 @@ public class CodeGeneratorTest {
         LR1 lr1 = LR1Builder.buildLR1(parseResult);
 //        LR1 lalr = LR1Builder.buildLALRFromLR1(lr1);
 
-        System.out.println(CodeGenerator.generateYTabC(parseResult, lr1, lr1.getTransGraph()));
+//        System.out.println(CodeGenerator.generateYTabC(parseResult, lr1, lr1.getTransGraph()));
 
     }
 
@@ -39,7 +39,7 @@ public class CodeGeneratorTest {
         LR1 lr1 = LR1Builder.buildLR1(parseResult);
 //        LR1 lalr = LR1Builder.buildLALRFromLR1(lr1);
 
-        System.out.println(CodeGenerator.generateTable(lr1, lr1.getTransGraph()));
+       // System.out.println(CodeGenerator.generateTable(lr1, lr1.getTransGraph()));
 
     }
 

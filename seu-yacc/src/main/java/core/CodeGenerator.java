@@ -148,7 +148,7 @@ public class CodeGenerator {
      * @param lr1
      * @return
      */
-    public static String generateTable(LR1 lr1, Map<Integer, Map<Integer, Integer>> graph){
+    public static String generateTable(LR1 lr1, TableGenerator tableGenerator){
 
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("int nonTerminalToColumnIndex(int i) { return -i - 1; }\n"); // 变换函数
@@ -215,7 +215,7 @@ public class CodeGenerator {
 
         // 产生action表和goto表
 
-        TableGenerator tableGenerator = new TableGenerator(lr1, graph);
+        //TableGenerator tableGenerator = new TableGenerator(lr1, graph);
 
         StringBuilder actionBuilder = new StringBuilder();
 
@@ -432,7 +432,7 @@ public class CodeGenerator {
      * @param lr1
      * @return
      */
-    public static String generateYTabC(ParseResult parseResult, LR1 lr1, Map<Integer, Map<Integer, Integer>> graph){
+    public static String generateYTabC(ParseResult parseResult, LR1 lr1, TableGenerator tableGenerator){
         StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append(
@@ -442,7 +442,7 @@ public class CodeGenerator {
         stringBuilder.append("// * ========== seu-yacc generation ============\n");
         /* main part */
         stringBuilder.append(generatePreSetContent(lr1));
-        stringBuilder.append(generateTable(lr1, graph));
+        stringBuilder.append(generateTable(lr1, tableGenerator));
         stringBuilder.append(generateActionSwitch(lr1));
         stringBuilder.append(generatePrintGrammarTree());
         stringBuilder.append(generateYYParse(lr1));

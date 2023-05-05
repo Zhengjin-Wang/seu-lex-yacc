@@ -1,8 +1,10 @@
 import core.CodeGenerator;
 import core.LR1Builder;
+import core.TableGenerator;
 import core.YaccParser;
 import dto.LR1;
 import dto.ParseResult;
+import utils.ExcelUtils;
 import utils.VisualizeUtils;
 
 import java.io.File;
@@ -39,17 +41,22 @@ public class YaccMain {
 
             // LALR优化
             LR1 lr;
+            TableGenerator tableGenerator;
             if(lalrModified) {
                 lr = LR1Builder.buildLALR(parseResult); // 可选项
+                tableGenerator = new TableGenerator(lr, lr.getLalrTransGraph());
             }
             else{
                 lr = LR1Builder.buildLR1(parseResult);
+                tableGenerator = new TableGenerator(lr, lr.getTransGraph());
             }
+
             String yTabHCode = CodeGenerator.generateYTabH(lr);
-            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr, lr.getLalrTransGraph());
+            String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr, tableGenerator);
 
             if(visualize) {
                 VisualizeUtils.visualizeLR1(lr);
+                ExcelUtils.exportActionAndGotoEable(tableGenerator);
             }
 
             File yTabHFile = new File("y.tab.h");
