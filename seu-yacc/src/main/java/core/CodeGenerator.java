@@ -284,12 +284,18 @@ public class CodeGenerator {
                     ++i;
                     c = action.charAt(i);
                     if(c == '$'){ // 是左部
-                        actionBuilder.append("node->val");
+                        StringBuilder semanticEntityBuilder = new StringBuilder();
+//                        semanticEntityBuilder.append("(");
+                        semanticEntityBuilder.append("node->val");
+
                         int symbolId = production.get(0);
                         String unionAttr = lr1.getSymbolToUnionAttr().get(symbolId);
                         if(unionAttr != null) {
-                            actionBuilder.append("." + unionAttr);
+                            semanticEntityBuilder.append("." + unionAttr);
                         }
+
+//                        semanticEntityBuilder.append(")");
+                        actionBuilder.append(semanticEntityBuilder);
                     }
                     else{ // 右部
                         String number = "";
@@ -298,14 +304,20 @@ public class CodeGenerator {
                             ++i;
                         }
                         --i;
-                        actionBuilder.append(String.format("(node->children[%s])->val", number));
+
+                        StringBuilder semanticEntityBuilder = new StringBuilder();
+//                        semanticEntityBuilder.append("(");
+                        semanticEntityBuilder.append(String.format("(node->children[%s])->val", number));
 
                         int index = Integer.parseInt(number);
                         int symbolId = production.get(index);
                         String unionAttr = lr1.getSymbolToUnionAttr().get(symbolId);
                         if(unionAttr != null) {
-                            actionBuilder.append("." + unionAttr);
+                            semanticEntityBuilder.append("." + unionAttr);
                         }
+
+//                        semanticEntityBuilder.append(")");
+                        actionBuilder.append(semanticEntityBuilder);
                     }
 
                 }
@@ -435,9 +447,6 @@ public class CodeGenerator {
     public static String generateYTabC(ParseResult parseResult, LR1 lr1, TableGenerator tableGenerator){
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append(
-                "// * ============== copyPart ================\n");
-        stringBuilder.append(parseResult.getPreCopy());
 
         stringBuilder.append("// * ========== seu-yacc generation ============\n");
         /* main part */
@@ -456,8 +465,15 @@ public class CodeGenerator {
     }
 
     // 生成 y.tab.h 主要是终结符的宏
-    public static String generateYTabH(LR1 lr1){
+    public static String generateYTabH(LR1 lr1, ParseResult parseResult){
         StringBuilder stringBuilder = new StringBuilder();
+
+        stringBuilder.append(
+                "// * ============== copyPart ================\n");
+        stringBuilder.append(parseResult.getPreCopy());
+        stringBuilder.append("\n");
+
+        stringBuilder.append("// * ============== y.tab.h generate part ================\n");
 
         for (Integer symbol : lr1.getNumberToSymbol().keySet()) {
             if(symbol < 128){ // 只考虑自定义的终结符，不考虑非终结符和ascii字符

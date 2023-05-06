@@ -5,3 +5,6 @@ java -jar seu-lex-1.0-SNAPSHOT.jar calculator.l -v && java -jar seu-yacc-1.0-SNA
 
 // c99 不要输出图片，太大
 java -jar seu-lex-1.0-SNAPSHOT.jar c99.l && java -jar seu-yacc-1.0-SNAPSHOT.jar c99.y -lalr && gcc seulex.yy.c y.tab.c -o parser.exe && parser.exe c99_t.txt 
+
+// symbol_chart_demo
+java -jar seu-lex-1.0-SNAPSHOT.jar symbol_chart_demo.l -v && java -jar seu-yacc-1.0-SNAPSHOT.jar symbol_chart_demo.y -v -lalr && gcc seulex.yy.c y.tab.c -o parser.exe && parser.exe symbol_chart_demo_t.txt 
