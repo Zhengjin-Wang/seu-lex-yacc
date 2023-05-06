@@ -55,8 +55,14 @@ public class YaccMain {
             String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr, tableGenerator);
 
             if(visualize) {
-                VisualizeUtils.visualizeLR1(lr);
-                ExcelUtils.exportActionAndGotoEable(tableGenerator);
+                if((!lalrModified && lr.getTransGraph().size() > 50) ||
+                        (lalrModified && lr.getLalrTransGraph().size() > 50)){
+                    System.out.println("lr分析状态数大于50，不进行可视化");
+                }
+                else {
+                    VisualizeUtils.visualizeLR1(lr);
+                    ExcelUtils.exportActionAndGotoTable(tableGenerator);
+                }
             }
 
             File yTabHFile = new File("y.tab.h");

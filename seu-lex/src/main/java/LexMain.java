@@ -49,7 +49,12 @@ public class LexMain {
 
             // 可视化
             if(args.length > 1 && args[1].equals("-v")) {
-                VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
+                if(dfa.getStates().size() > 80){
+                    System.out.println("dfa状态数大于80，不进行可视化");
+                }
+                else {
+                    VisualizeUtils.visualizeFA(dfa); // 图片默认生成在jar包同级目录下
+                }
             }
 
             // 生成c文件
