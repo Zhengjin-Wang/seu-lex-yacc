@@ -19,17 +19,17 @@ public class CodeGenerator {
                 "#define ECHO fprintf(yyout,\"%s\\n\",yytext);\n" +
                 "#ifndef YYSTYPE\n" +
                 "#define YYSTYPE int\n" +
-                "#endif // !YYSTYPE\n" +
+                "#endif \n" +
                 "YYSTYPE yylval;\n" +
                 "int yylineno = 1, yyleng = 0;\n" +
                 "FILE *yyin = NULL, *yyout = NULL;\n" +
                 "char yytext[1024] = {0};\n" +
-                "char _cur_buf[1024] = {0};\n" +
-                "int _cur_char = 0;\n" +
-                "const int _init_state = " + dfa.getStartState() + ";\n" +
-                "int _cur_state = _init_state, _cur_ptr = 0, _cur_buf_ptr = 0, _lat_acc_state = -1, _lat_acc_ptr = 0;\n" +
+                "char _buffer[1024] = {0};\n" +
+                "int cur_char = 0;\n" +
+                "const int init_state = "+ dfa.getStartState() +";\n" +
+                "int cur_state = init_state, cur_ptr = 0, _buffer_ptr = 0, last_acc_state = -1, last_acc_ptr = 0;\n" +
                 "int yywrap();\n" +
-                "int yylex();\n";
+                "int yylex();";
     }
 
     public static String generateYYless(){
@@ -56,7 +56,7 @@ public class CodeGenerator {
         Integer maxState = Collections.max(dfa.getStates());
         Integer stateNum = maxState + 1;
 
-        stringBuilder.append("const int _trans_mat[" + stateNum + "][128] = {\n");
+        stringBuilder.append("const int transfer_matrix[" + stateNum + "][128] = {\n");
 
         // SpAlpha.ANY 表示其他字符，如果当前状态下读入的字符会转移到-1状态，先试试能不能通过字符0转移，字符0就代表OTHER
         for(int i = 0; i < stateNum; ++i){
@@ -95,13 +95,13 @@ public class CodeGenerator {
     }
 
     // 构造状态和switch case number的关系，如果值为-1，表示非终态，终态下标和值相同
-    public static String generateSwitchCase(DFA dfa){
+    public static String generateAcceptStateTable(DFA dfa){
         StringBuilder stringBuilder = new StringBuilder();
         // 由于最小化了，状态可能不连续，先获取最大的状态号
         Integer maxState = Collections.max(dfa.getStates());
         Integer stateNum = maxState + 1;
 
-        stringBuilder.append("const int _swi_case[" + stateNum + "] = {");
+        stringBuilder.append("const int acc_table[" + stateNum + "] = {");
         for(int i = 0; i < stateNum; ++i){
             if(dfa.getEndStates().contains(i)){
                 stringBuilder.append(i + ",");
@@ -138,51 +138,53 @@ public class CodeGenerator {
                 "      int rollbackLines = 0;\n" +
                 "      if (yyin == NULL) yyin = stdin;\n" +
                 "      if (yyout == NULL) yyout = stdout;\n" +
-                "      if (_cur_char == EOF) {\n" +
+                "      if (cur_char == EOF) {\n" +
                 "        if (yywrap() == 1) return 0;\n" +
                 "        else {\n" +
                 "          yylineno = 1;\n" +
                 "          yyleng = 0;\n" +
-                "          memset(yytext, 0, sizeof(_cur_buf));\n" +
-                "          memset(_cur_buf, 0, sizeof(_cur_buf));\n" +
-                "          _cur_char = 0;\n" +
-                "          _cur_state = _init_state, _cur_ptr = 0, _cur_buf_ptr = 0;\n" +
-                "          _lat_acc_state = -1, _lat_acc_ptr = 0;\n" +
+                "          memset(yytext, 0, sizeof(yytext));\n" +
+                "          memset(_buffer, 0, sizeof(_buffer));\n" +
+                "          cur_char = 0;\n" +
+                "          cur_state = init_state, cur_ptr = 0, _buffer_ptr = 0, last_acc_state = -1, last_acc_ptr = 0;\n" +
                 "        }\n" +
                 "      }\n" +
-                "      while (_cur_state != -1) {\n" +
-                "        _cur_char = fgetc(yyin); \n" +
-                "        _cur_ptr++;\n" +
-                "        if (_cur_char == '\\n') yylineno++, rollbackLines++;\n" +
-                "        _cur_buf[_cur_buf_ptr++] = _cur_char;\n" +
-                "        int _other = _trans_mat[_cur_state][0]; // 当前状态ANY边可达状态\n" +
-                "        _cur_state = _trans_mat[_cur_state][_cur_char];\n" +
-                "        if(_cur_state == -1) _cur_state =  _other; // 当前不能匹配，再试一下OTHER\n" +
-                "        if (_swi_case[_cur_state] != -1) {\n" +
-                "          _lat_acc_state = _cur_state;\n" +
-                "          _lat_acc_ptr = _cur_ptr - 1;\n" +
+                "\n" +
+                "      while (cur_state != -1) {\n" +
+                "        cur_char = fgetc(yyin); \n" +
+                "        cur_ptr++;\n" +
+                "        if (cur_char == '\\n') yylineno++, rollbackLines++;\n" +
+                "        _buffer[_buffer_ptr++] = cur_char;\n" +
+                "        int _other = transfer_matrix[cur_state][0]; // 当前状态OTHER边可达状态\n" +
+                "        cur_state = transfer_matrix[cur_state][cur_char]; // 从当前字符转移到的状态\n" +
+                "        if(cur_state == -1 && cur_char != '\\n') cur_state =  _other; // 当前不能匹配，再试一下OTHER\n" +
+                "        if (cur_state == -1) break; // 还不能匹配，说明已经离开状态机接收范围了\n" +
+                "        if (acc_table[cur_state] != -1) { // 到达了一个终态\n" +
+                "          last_acc_state = cur_state;\n" +
+                "          last_acc_ptr = cur_ptr - 1; // cur_ptr已经往后移动了一格，当前字符的位置是上一格\n" +
                 "          rollbackLines = 0;\n" +
                 "        }\n" +
                 "      }\n" +
-                "      if (_lat_acc_state != -1) {\n" +
-                "        fseek(yyin, _lat_acc_ptr - _cur_ptr + 1, SEEK_CUR);\n" +
+                "\n" +
+                "      if (last_acc_state != -1) {\n" +
+                "        fseek(yyin, last_acc_ptr - (cur_ptr - 1) , SEEK_CUR); // 当前字符被读入了，指针回退一格，要把它返回到输入流，作为下一次匹配的开始\n" +
                 "        yylineno -= rollbackLines;\n" +
-                "        _cur_ptr = _lat_acc_ptr;\n" +
-                "        _cur_state = 0;\n" +
-                "        _cur_buf[_cur_buf_ptr - 1] = '\\0';\n" +
+                "        cur_ptr = last_acc_ptr;\n" +
+                "        cur_state = 0;\n" +
+                "        _buffer[_buffer_ptr - 1] = '\\0'; // 把上一个无效字符覆盖为\\0\n" +
                 "        memset(yytext, 0, sizeof(yytext));\n" +
-                "        yyleng = strlen(_cur_buf);\n" +
-                "        strcpy(yytext, _cur_buf);\n" +
-                "        memset(_cur_buf, 0, sizeof(_cur_buf));\n" +
-                "        _cur_buf_ptr = 0;\n" +
-                "        int _lat_acc_state_bak = _lat_acc_state;\n" +
-                "        _lat_acc_state = -1;\n" +
-                "        _lat_acc_ptr = 0;\n" +
-                "        switch (_swi_case[_lat_acc_state_bak]) {\n" +
+                "        yyleng = strlen(_buffer);\n" +
+                "        strcpy(yytext, _buffer);\n" +
+                "        memset(_buffer, 0, sizeof(_buffer));\n" +
+                "        _buffer_ptr = 0;\n" +
+                "        int acc_state = last_acc_state;\n" +
+                "        last_acc_state = -1;\n" +
+                "        last_acc_ptr = 0;\n" +
+                "        switch (acc_state) {" +
                 generateSwitchAction(dfa) +
                 "        }\n" +
-                "      } else return -1; // error\n" +
-                "      return -2; // FIXME!\n" +
+                "      } else return -1; // error 从一个非终态跳出状态机\n" +
+                "      return -2; // yyparse() continue, meet an ignorable token\n" +
                 "    }\n";
     }
 
@@ -197,7 +199,7 @@ public class CodeGenerator {
         stringBuilder.append("// * ========== seu-lex generation ============\n");
         stringBuilder.append(generatePreContent(dfa));
         stringBuilder.append(generateTransMatrix(dfa));
-        stringBuilder.append(generateSwitchCase(dfa));
+        stringBuilder.append(generateAcceptStateTable(dfa));
         stringBuilder.append(generateYYlex(dfa));
 
         stringBuilder.append(generateYYless());

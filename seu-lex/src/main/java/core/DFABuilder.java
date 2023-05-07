@@ -45,7 +45,8 @@ public class DFABuilder {
         queue.add(nfaStartStates);
 
         long diff = 0;
-        
+        long nfaToDfaStartTime = System.currentTimeMillis();
+
         while(!queue.isEmpty()){
             Set<Integer> curNfaStates = queue.poll();
             int curDfaState = nfaToDfaStateMap.get(curNfaStates);
@@ -76,8 +77,12 @@ public class DFABuilder {
                 dfa.addEdge(curDfaState, nextDfaStates, c);
             }
         }
-        System.out.println("计算move总时间：" + diff + " 毫秒");
-        System.out.println("计算epsilon-closure时间：" + NFA.timeDiff + " 毫秒");
+
+        long nfaToDfaEndTime = System.currentTimeMillis();
+        System.out.println("子集法求NFA->DFA时间：" + (nfaToDfaEndTime - nfaToDfaStartTime) + " 毫秒");
+
+//        System.out.println("NFA转换DFA中子集法计算move(I_x, c)总时间：" + diff + " 毫秒");
+//        System.out.println("move时由下一个初始状态集求它的epsilon-closure总时间：" + NFA.timeDiff + " 毫秒");
         // 最后要根据 nfaToDfaStateMap 中key是否和nfa的endState有交集判断dfa的endState, 并判断该添加哪个动作
         Set<Integer> endStates = new HashSet<>();
         Map<Integer, LexAction> actionMap = new HashMap<>();

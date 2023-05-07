@@ -27,7 +27,10 @@ public class LexMain {
             System.out.println("Running...");
             ParseResult parseResult = LexParser.getParseResult(file);
 //            System.out.println(parseResult.getRegexAction());
+            Long buildNfaStartTime = System.currentTimeMillis();
             NFA nfa = NFABuilder.buildNFA(parseResult);
+            Long buildNfaEndTime = System.currentTimeMillis();
+            System.out.println("生成NFA时间：" + (buildNfaEndTime - buildNfaStartTime) + " 毫秒");
             DFA bigDfa = DFABuilder.buildDFA(nfa);
             DFA dfa = DFABuilder.minimizeDFA(bigDfa);
             String code = CodeGenerator.generateCode(parseResult, dfa);
