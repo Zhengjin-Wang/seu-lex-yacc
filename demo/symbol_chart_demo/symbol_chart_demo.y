@@ -47,7 +47,7 @@ statement		: var ASSIGN exp	{
 					else{
 						printf("Declare a new var.\n");
 					}
-					printf("assign var: %s,  value: %d\n", $1->name, $3);
+					printf("assigned var: %s,  value: %d\n", $1->name, $3);
 					$1->value = $3;
 					$1->isAssigned = 1;
 				}

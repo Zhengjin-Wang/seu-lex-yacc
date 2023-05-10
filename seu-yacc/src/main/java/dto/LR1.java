@@ -53,6 +53,7 @@ public class LR1 {
     private Map<Integer, String> symbolToUnionAttr = new HashMap<>();
     private String unionString;
 
+    // 可视化action表时，只显示出现过的终结符
     public Set<Integer> getOccurredSymbols(){
         if(occurredSymbols != null){
             return occurredSymbols;

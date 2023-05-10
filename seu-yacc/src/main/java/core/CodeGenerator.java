@@ -465,7 +465,7 @@ public class CodeGenerator {
     }
 
     // 生成 y.tab.h 主要是终结符的宏
-    public static String generateYTabH(LR1 lr1, ParseResult parseResult){
+    public static String generateYTabH(ParseResult parseResult, LR1 lr1){
         StringBuilder stringBuilder = new StringBuilder();
 
         stringBuilder.append(

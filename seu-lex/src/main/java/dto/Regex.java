@@ -275,6 +275,9 @@ public class Regex {
                         opStack.pop();
                     }
                     else {
+                        // SpAlpha.infixOpPriorityCompare(opStack.peek(), c) 指 priority(opStack.peek()) < priority(c)
+                        // !SpAlpha.infixOpPriorityCompare(opStack.peek(), c) 指 priority(opStack.peek()) >= priority(c)
+                        // 运算符都是左结合的，所以栈顶元素优先级大于和等于当前运算符时，都会被弹出
                         while(!opStack.empty() && !SpAlpha.infixOpPriorityCompare(opStack.peek(), c)){
                             stringBuilder.append(opStack.pop());
                         }

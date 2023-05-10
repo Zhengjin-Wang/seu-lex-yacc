@@ -64,7 +64,7 @@ public class NFABuilder {
 
 
     /**
-     * 将输入NFA做Kleene闭包（星闭包），见龙书3.7.1节图3-34
+     * 将输入NFA做Kleene闭包（星闭包）
      * ```
      *      ________________ε_______________
      *     |                                ↓
@@ -104,7 +104,7 @@ public class NFABuilder {
     }
 
     /**
-     * 串联两个NFA，丢弃所有动作
+     * 串联两个NFA
      * ```
      * NFA1 --epsilon--> NFA2
      * ```
@@ -141,7 +141,7 @@ public class NFABuilder {
     }
 
     /**
-     * 并联两个NFA（对应于|或运算），收束尾部，丢弃所有动作
+     * 并联两个NFA（对应于|或运算），收束尾部
      * ```
      *             ε  NFA1  ε
      * new_start <             > new_accept

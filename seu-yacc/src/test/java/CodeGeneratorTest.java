@@ -17,7 +17,7 @@ public class CodeGeneratorTest {
         LR1 lr1 = LR1Builder.buildLR1(parseResult);
 //        LR1 lalr = LR1Builder.buildLALRFromLR1(lr1);
 
-        System.out.println(CodeGenerator.generateYTabH(lr1, parseResult));
+        System.out.println(CodeGenerator.generateYTabH(parseResult, lr1));
 
     }
 

@@ -51,7 +51,7 @@ public class YaccMain {
                 tableGenerator = new TableGenerator(lr, lr.getTransGraph());
             }
 
-            String yTabHCode = CodeGenerator.generateYTabH(lr, parseResult);
+            String yTabHCode = CodeGenerator.generateYTabH(parseResult, lr);
             String yTabCCode = CodeGenerator.generateYTabC(parseResult, lr, tableGenerator);
 
             if(visualize) {
