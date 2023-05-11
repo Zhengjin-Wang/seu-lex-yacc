@@ -1,7 +1,7 @@
 ## seu-lex-yacc
 
 ### 简介
-![img.png](doc/asset/img.png)
+![img.png](doc/asset/img.jpg)
 
 将.l文件和.y文件分别输入seu-lex和seu-yacc，可生成seulex.yy.c、y.tab.h、y.tab.c三个文件，对生成的C文件进行联合编译，可以得到文法解析程序，在命令行中运行该程序即可实现对源文件的文法解析。
 
