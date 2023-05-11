@@ -1,6 +1,8 @@
 ## seu-lex-yacc
 
 ### 简介
+lex和yacc是Unix系统中常用的编译器开发工具，它们通常一起使用来创建编译器和解析器。本项目实现了lex和yacc的基本功能，用户可以参照.l和.y文件格式制定词法和文法规则，使用seu-lex-yacc生成编译程序。此外，seu-lex-yacc提供了可视化功能。
+
 ![img.png](doc/asset/img.jpg)
 
 将.l文件和.y文件分别输入seu-lex和seu-yacc，可生成seulex.yy.c、y.tab.h、y.tab.c三个文件，对生成的C文件进行联合编译，可以得到文法解析程序，在命令行中运行该程序即可实现对源文件的文法解析。
