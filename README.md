@@ -49,11 +49,18 @@
 
 1. 在两个子文件夹seu-lex和seu-yacc下分别执行mvn package -DskipTests，得到两个jar包。
 
-2. 使用java -jar seu-lex-1.0-SNAPSHOT.jar <.l文件名> [options]
-java -jar seu-yacc-1.0-SNAPSHOT.jar <.y文件名> [options]
-可以在命令行中运行seu-lex和seu-yacc工具
-seu-lex 默认输出seulex.yy.c一个文件
-seu-yacc 默认输出 y.tab.h y.tab.c 两个文件
+2. 使用
+    ```
+    java -jar seu-lex-1.0-SNAPSHOT.jar <.l文件名> [options] 
+
+    java -jar seu-yacc-1.0-SNAPSHOT.jar <.y文件名> [options]
+   ```
+
+    在命令行中运行seu-lex和seu-yacc工具
+
+    seu-lex 默认输出 seulex.yy.c 一个文件
+
+    seu-yacc 默认输出 y.tab.h y.tab.c 两个文件
 
 
     seu-lex 可选参数:
@@ -64,7 +71,14 @@ seu-yacc 默认输出 y.tab.h y.tab.c 两个文件
     -lalr 构造lalr(1)分析表
 
 3. 将y.tab.c seulex.yy.c联合编译即可输出解析程序（请在.l文件中引入y.tab.h）
-例 gcc y.tab.c seulex.yy.c -o parser.exe
+
+    例: ```gcc y.tab.c seulex.yy.c -o parser.exe```
+
+4. 若在.y文件中定义能接受文件名作为参数的main函数，则可以通过命令
+    ```
+    parser.exe 源文件
+    ```
+    解析源文件。具体可见demo。
 
 在demo文件夹下可以运行示例。
 
