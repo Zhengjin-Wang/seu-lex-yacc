@@ -69,7 +69,7 @@
 
     seu-yacc 可选参数[options]:
 
-    -v 输出lr状态转移图可视化图片
+    -v 输出lr状态转移图可视化图片，以及action goto表(excel表)
 
     -lalr 构造lalr(1)分析表
 
