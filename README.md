@@ -47,7 +47,7 @@
 ### 使用说明
 项目需要maven和graphviz依赖。
 
-1. 在两个子文件夹seu-lex和seu-yacc下分别执行mvn package -DskipTests，得到两个jar包。
+1. 在两个子文件夹seu-lex和seu-yacc下分别执行```mvn package -DskipTests```，得到两个jar包。
 
 2. 使用
     ```
