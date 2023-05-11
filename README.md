@@ -61,7 +61,7 @@
     seu-lex 默认输出 seulex.yy.c 一个文件
 
     seu-yacc 默认输出 y.tab.h y.tab.c 两个文件
-
+   
 
     seu-lex 可选参数[options]:
 
@@ -70,6 +70,7 @@
     seu-yacc 可选参数[options]:
 
     -v 输出lr状态转移图可视化图片
+
     -lalr 构造lalr(1)分析表
 
 3. 将y.tab.c seulex.yy.c联合编译即可输出解析程序（请在.l文件中引入y.tab.h）
