@@ -63,10 +63,12 @@
     seu-yacc 默认输出 y.tab.h y.tab.c 两个文件
 
 
-    seu-lex 可选参数:
+    seu-lex 可选参数[options]:
+
     -v 输出DFA可视化图片
 
-    seu-yacc 可选参数
+    seu-yacc 可选参数[options]:
+
     -v 输出lr状态转移图可视化图片
     -lalr 构造lalr(1)分析表
 
