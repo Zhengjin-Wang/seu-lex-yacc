@@ -90,6 +90,8 @@ lex和yacc是Unix系统中常用的编译器开发工具，它们通常一起使
 ### 需要graphviz支持
 https://www.graphviz.org/
 
+请确保系统具有simhei字体
+
 ### 参考
 [1] https://github.com/z0gSh1u/seu-lex-yacc
 
